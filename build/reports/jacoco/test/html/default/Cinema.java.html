@@ -1,0 +1,2342 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Cinema.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Assignment__2-Sprint_3</a> &gt; <a href="index.source.html" class="el_package">default</a> &gt; <span class="el_source">Cinema.java</span></div><h1>Cinema.java</h1><pre class="source lang-java linenums">import java.io.*;
+import java.sql.PreparedStatement;
+import java.text.SimpleDateFormat;
+import java.util.*;
+import java.lang.String;
+import java.io.FileWriter;
+import java.io.BufferedWriter;
+import java.io.IOException;
+import java.io.FileReader;
+import java.io.BufferedReader;
+import java.util.List;
+import java.util.stream.Collectors;
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
+
+import javax.print.attribute.standard.PresentationDirection;
+
+public class Cinema {
+    private List&lt;Movie&gt; movies;
+    private List&lt;String&gt; screenSizes;
+    private List&lt;Account&gt; accounts;
+    private List&lt;GiftCard&gt; giftCards;
+<span class="fc" id="L25">    private boolean loggedIn = false;</span>
+<span class="fc" id="L26">    private File accountsFile = new File(&quot;src/main/resources/accounts.csv&quot;);</span>
+<span class="fc" id="L27">    private File moviesFile = new File(&quot;src/main/resources/movies.csv&quot;);</span>
+<span class="fc" id="L28">    private File giftCardFile = new File(&quot;src/main/resources/giftcards.csv&quot;);</span>
+<span class="fc" id="L29">    private File bookingsFile = new File(&quot;src/main/resources/bookings.txt&quot;);</span>
+<span class="fc" id="L30">    private String creditCardFile = &quot;src/main/resources/credit_cards.json&quot;;</span>
+    private Account currAcc;
+    private List&lt;String&gt; allCinemaRooms;
+    private List&lt;String&gt; allRatings;
+<span class="fc" id="L34">    private List&lt;Transaction&gt; transactions = new ArrayList&lt;Transaction&gt;();</span>
+    private JSONArray cards;
+<span class="fc" id="L36">    private int checkPaymentVal = 5;</span>
+<span class="fc" id="L37">    private int timeoutTime = 10*1000;</span>
+    private int totalTicketValue;
+
+<span class="fc" id="L40">    public Cinema() {</span>
+<span class="fc" id="L41">        this.movies = new ArrayList&lt;Movie&gt;();</span>
+<span class="fc" id="L42">        this.screenSizes = Arrays.asList(&quot;Bronze&quot;, &quot;Silver&quot;, &quot;Gold&quot;);</span>
+<span class="fc" id="L43">        this.accounts = new ArrayList&lt;Account&gt;();</span>
+<span class="fc" id="L44">        this.allCinemaRooms = Arrays.asList(&quot;1&quot;, &quot;2&quot;, &quot;3&quot;);</span>
+<span class="fc" id="L45">        this.giftCards = new ArrayList&lt;GiftCard&gt;();</span>
+<span class="fc" id="L46">        this.allRatings = Arrays.asList(&quot;G&quot;, &quot;PG&quot;, &quot;M&quot;, &quot;MA15+&quot;, &quot;R18+&quot;);</span>
+<span class="fc" id="L47">    }</span>
+
+    /**
+     * In charge of creating the proper movie objects
+     * helper method
+     */
+    public Movie createMovie(String[] details){
+<span class="fc" id="L54">        Date release_date = null;</span>
+<span class="fc" id="L55">        List&lt;String&gt; upcoming_times = null;</span>
+<span class="fc" id="L56">        List&lt;String&gt; cinema_rooms = null;</span>
+<span class="fc" id="L57">        List&lt;List&lt;Integer&gt;&gt; allSeats = new ArrayList&lt;List&lt;Integer&gt;&gt;();</span>
+
+        try{
+<span class="fc" id="L60">            SimpleDateFormat sdf = new SimpleDateFormat(&quot;dd/MM/yyyy&quot;, Locale.ENGLISH);</span>
+<span class="fc" id="L61">            release_date = sdf.parse(details[3]);</span>
+
+<span class="fc" id="L63">            upcoming_times = Arrays.asList(details[6].split(&quot;,&quot;));</span>
+
+<span class="fc" id="L65">            cinema_rooms = Arrays.asList(details[8].split(&quot;,&quot;));</span>
+
+<span class="fc" id="L67">            List&lt;Integer&gt; seats = new ArrayList&lt;Integer&gt;();</span>
+<span class="fc" id="L68">            seats.add(Integer.valueOf(details[9]));</span>
+<span class="fc" id="L69">            seats.add(Integer.valueOf(details[10]));</span>
+<span class="fc" id="L70">            seats.add(Integer.valueOf(details[11]));</span>
+<span class="fc bfc" id="L71" title="All 2 branches covered.">            for (int i = 0; i &lt; upcoming_times.size(); i++) {</span>
+<span class="fc" id="L72">                allSeats.add(seats);</span>
+            }
+        }
+<span class="nc" id="L75">        catch(Exception e){</span>
+<span class="nc" id="L76">            System.out.println(&quot;Error: Failed to load database&quot;);</span>
+<span class="nc" id="L77">            System.exit(0);</span>
+<span class="fc" id="L78">        }</span>
+
+<span class="fc" id="L80">        Movie movie = new Movie(details[0], details[1], details[2], release_date, details[4], details[5], upcoming_times, details[7], cinema_rooms, allSeats);</span>
+<span class="fc" id="L81">        return movie;</span>
+    }
+
+    public Account createNewAccount(String username, String password, int perms){
+
+<span class="fc" id="L86">        return new Account(username, password, perms);</span>
+    }
+
+    public void setMovies(File movie_file){
+<span class="fc" id="L90">        this.moviesFile = movie_file;</span>
+<span class="fc" id="L91">    }</span>
+
+    public void setAccountsFile(File accountsFile) {
+<span class="fc" id="L94">        this.accountsFile = accountsFile;</span>
+<span class="fc" id="L95">    }</span>
+
+    public void setBookingsFile(File bookingsFile) {
+<span class="fc" id="L98">        this.bookingsFile = bookingsFile;</span>
+<span class="fc" id="L99">    }</span>
+
+    public void setGiftCardFile(File giftCardFile) {
+<span class="fc" id="L102">        this.giftCardFile = giftCardFile;</span>
+<span class="fc" id="L103">    }</span>
+
+    public void createGiftCards() throws FileNotFoundException {
+
+<span class="fc" id="L107">        Scanner sc = null;</span>
+        try {
+<span class="fc" id="L109">            sc = new Scanner(this.giftCardFile);</span>
+        }
+<span class="nc" id="L111">        catch (FileNotFoundException e) {</span>
+<span class="nc" id="L112">            throw new FileNotFoundException(&quot;Error: Could not load the database.&quot;);</span>
+<span class="fc" id="L113">        }</span>
+<span class="fc bfc" id="L114" title="All 2 branches covered.">        while (sc.hasNextLine()) {</span>
+<span class="fc" id="L115">            String line = sc.nextLine();</span>
+<span class="fc" id="L116">            String[] details = line.split(&quot;,&quot;);</span>
+<span class="fc" id="L117">            GiftCard newCard = createNewGiftCard(details[0], Integer.parseInt(details[1]));</span>
+<span class="fc" id="L118">            this.giftCards.add(newCard);</span>
+<span class="fc" id="L119">        }</span>
+
+<span class="fc" id="L121">    }</span>
+
+    public void createAccounts() throws FileNotFoundException {
+
+<span class="fc" id="L125">        Scanner sc = null;</span>
+        try {
+<span class="fc" id="L127">            sc = new Scanner(this.accountsFile);</span>
+        }
+<span class="fc" id="L129">        catch (FileNotFoundException e) {</span>
+//            System.out.println(&quot;Error: Could not load the database.&quot;);
+//            System.exit(0);
+<span class="fc" id="L132">            throw new FileNotFoundException(&quot;Error: Could not load the database.&quot;);</span>
+<span class="fc" id="L133">        }</span>
+        //skipping formatting line
+<span class="fc bfc" id="L135" title="All 2 branches covered.">        while (sc.hasNextLine()) {</span>
+<span class="fc" id="L136">            String line = sc.nextLine();</span>
+<span class="fc" id="L137">            String[] details = line.split(&quot;,&quot;);</span>
+
+<span class="fc" id="L139">            Account account = createNewAccount(details[0], details[1], Integer.parseInt(details[2]));</span>
+<span class="fc" id="L140">            this.accounts.add(account);</span>
+<span class="fc" id="L141">        }</span>
+
+<span class="fc" id="L143">    }</span>
+
+    public List&lt;Account&gt; getAccounts() {
+<span class="fc" id="L146">        return accounts;</span>
+    }
+
+    /**
+     * In charge of reading/parsing movie csv into list of movies
+     * @return List of movie objects
+     */
+    public List&lt;Movie&gt; getMovies() {
+<span class="fc" id="L154">        this.movies.clear();</span>
+<span class="fc" id="L155">        Scanner sc = null;</span>
+        try {
+<span class="fc" id="L157">            sc = new Scanner(moviesFile);</span>
+        }
+<span class="nc" id="L159">        catch (FileNotFoundException e) {</span>
+<span class="nc" id="L160">            System.out.println(&quot;Error: Could not load the database.&quot;);</span>
+<span class="nc" id="L161">            System.exit(0);</span>
+<span class="fc" id="L162">        }</span>
+        //skipping formatting line
+<span class="fc" id="L164">        sc.nextLine();</span>
+<span class="fc bfc" id="L165" title="All 2 branches covered.">        while (sc.hasNextLine()) {</span>
+<span class="fc" id="L166">            String line = sc.nextLine();</span>
+<span class="fc" id="L167">            String[] details = line.split(&quot;;&quot;);</span>
+
+<span class="fc" id="L169">            Movie movie = createMovie(details);</span>
+<span class="fc" id="L170">            this.movies.add(movie);</span>
+<span class="fc" id="L171">        }</span>
+<span class="fc" id="L172">        return movies;</span>
+    }
+
+//    public List&lt;String&gt; getScreenSizes() {
+//        return screenSizes;
+//    }
+
+    // FEEL FREE TO CHANGE THE RETURN TYPE IF NECESSARY OR REMOVE THE METHOD
+//    public void readCSV() {
+//
+//    }
+
+    /**
+     * In charge of taking a list of movies and displaying
+     * their information properly
+     */
+    public void displayMovies() {
+//        List&lt;Movie&gt; movies = getMovies();
+<span class="fc" id="L190">        System.out.format(&quot;%-25s%-8s%-20s%-15s%-20s%-20s%-15s%-20s%-15s\n&quot;, &quot;Name&quot;, &quot;Rating&quot;, &quot;Synopsis&quot;, &quot;Release date&quot;, &quot;Director&quot;, &quot;Cast&quot;, &quot;Screen size&quot;, &quot;Upcoming times&quot;, &quot;Cinema Rooms&quot;, &quot;Avail. Seats&quot;);</span>
+<span class="fc" id="L191">        System.out.println(&quot;-----------------------------------------------------------------------------------------------------------------------------------------------------------&quot;);</span>
+<span class="fc bfc" id="L192" title="All 2 branches covered.">        for (Movie movie: movies){</span>
+<span class="fc" id="L193">            System.out.println(movie.getMovieInformation());</span>
+//            System.out.println();
+<span class="fc" id="L195">        }</span>
+
+<span class="fc" id="L197">    }</span>
+
+    public boolean filterMovies(Scanner userInput) {
+//        Scanner userInput = new Scanner(System.in);
+//        boolean filterComplete = false;
+//        while (!filterComplete) {
+<span class="fc" id="L203">        String selections = userInput.nextLine();</span>
+<span class="fc" id="L204">        System.out.println(&quot;Select the options that you would like to filter.\n&quot; +</span>
+                &quot;(To select multiple options, split by comma. E.g. 1,2)\n&quot; +
+                &quot;Movie Screen Sizes:\n&quot; +
+                &quot;  1. Bronze\n&quot; +
+                &quot;  2. Silver\n&quot; +
+                &quot;  3. Gold\n&quot; +
+                &quot;Cinema Rooms:\n&quot; +
+                &quot;  4. Room 1\n&quot; +
+                &quot;  5. Room 2\n&quot; +
+                &quot;  6. Room 3\n&quot; +
+                &quot;Movie Ratings:\n&quot; +
+                &quot;  7. G\n&quot; +
+                &quot;  8. PG\n&quot; +
+                &quot;  9. M\n&quot; +
+                &quot;  10. MA15+\n&quot; +
+                &quot;  11. R18+\n&quot;
+        );
+<span class="fc" id="L221">        selections = userInput.nextLine();</span>
+
+        // Split the selection input and convert to int
+<span class="fc" id="L224">        List&lt;Integer&gt; filters = new ArrayList&lt;Integer&gt;();</span>
+//            boolean filterInvalid = false;
+<span class="fc bfc" id="L226" title="All 2 branches covered.">        for (String s : selections.split(&quot;,&quot;)) {</span>
+            try {
+<span class="fc" id="L228">                filters.add(Integer.parseInt(s.trim()));</span>
+<span class="fc" id="L229">            } catch (NumberFormatException e) {</span>
+<span class="fc" id="L230">                System.out.println(&quot;Error: Invalid option entered.\n&quot;);</span>
+//                    filterInvalid = true;
+<span class="fc" id="L232">                return false;</span>
+<span class="fc" id="L233">            }</span>
+        }
+//            if (filterInvalid) {
+//                continue;
+//            }
+
+<span class="fc" id="L239">        List&lt;String&gt; screenSizeFilters = new ArrayList&lt;String&gt;();</span>
+<span class="fc" id="L240">        List&lt;String&gt; cinemaRoomFilters = new ArrayList&lt;String&gt;();</span>
+<span class="fc" id="L241">        List&lt;String&gt; ratingFilters = new ArrayList&lt;String&gt;();</span>
+
+        // Check if all the selected options are valid
+<span class="fc bfc" id="L244" title="All 2 branches covered.">        for (int filter : filters) {</span>
+<span class="fc bfc" id="L245" title="All 4 branches covered.">            if (filter &gt;= 1 &amp;&amp; filter &lt;= 3) {</span>
+<span class="fc" id="L246">                screenSizeFilters.add(this.screenSizes.get(filter - 1));</span>
+            }
+<span class="fc bfc" id="L248" title="All 4 branches covered.">            else if (filter &gt;= 4 &amp;&amp; filter &lt;= 6) {</span>
+<span class="fc" id="L249">                cinemaRoomFilters.add(this.allCinemaRooms.get(filter - 4));</span>
+            }
+<span class="fc bfc" id="L251" title="All 4 branches covered.">            else if (filter &gt;= 7 &amp;&amp; filter &lt;= 11) {</span>
+<span class="fc" id="L252">                ratingFilters.add(this.allRatings.get(filter - 7));</span>
+            }
+            else {
+<span class="fc" id="L255">                System.out.println(&quot;Error: Invalid option selected.\n&quot;);</span>
+//                    filterInvalid = true;
+<span class="fc" id="L257">                return false;</span>
+            }
+<span class="fc" id="L259">        }</span>
+//            if (filterInvalid) {
+//                continue;
+//            }
+
+<span class="fc bfc" id="L264" title="All 2 branches covered.">        if (screenSizeFilters.size() == 0) {</span>
+<span class="fc" id="L265">            screenSizeFilters = this.screenSizes;</span>
+        }
+<span class="fc bfc" id="L267" title="All 2 branches covered.">        if (cinemaRoomFilters.size() == 0) {</span>
+<span class="fc" id="L268">            cinemaRoomFilters = this.allCinemaRooms;</span>
+        }
+<span class="fc bfc" id="L270" title="All 2 branches covered.">        if (ratingFilters.size() == 0) {</span>
+<span class="fc" id="L271">            ratingFilters = this.allRatings;</span>
+        }
+
+<span class="fc" id="L274">        List&lt;Movie&gt; displayMovies = new ArrayList&lt;Movie&gt;();</span>
+<span class="fc bfc" id="L275" title="All 2 branches covered.">        for (Movie movie : this.movies) {</span>
+<span class="pc bpc" id="L276" title="2 of 4 branches missed.">            if (screenSizeFilters.contains(movie.getScreenSize()) &amp;&amp; ratingFilters.contains(movie.getClassification())) {</span>
+<span class="fc" id="L277">                boolean contains = false;</span>
+<span class="fc bfc" id="L278" title="All 2 branches covered.">                for (String room : movie.getCinemaRooms()) {</span>
+<span class="fc bfc" id="L279" title="All 2 branches covered.">                    if (cinemaRoomFilters.contains(room)) {</span>
+<span class="fc" id="L280">                        contains = true;</span>
+<span class="fc" id="L281">                        break;</span>
+                    }
+<span class="fc" id="L283">                }</span>
+<span class="pc bpc" id="L284" title="1 of 4 branches missed.">                if (contains &amp;&amp; !displayMovies.contains(movie)) {</span>
+<span class="fc" id="L285">                    displayMovies.add(movie);</span>
+                }
+            }
+<span class="fc" id="L288">        }</span>
+
+<span class="fc bfc" id="L290" title="All 2 branches covered.">        for (Movie movie : displayMovies) {</span>
+<span class="fc" id="L291">            System.out.println(movie.getLongSingleInfo());</span>
+<span class="fc" id="L292">        }</span>
+//            filterComplete = true;
+//        }
+<span class="fc" id="L295">        return true;</span>
+    }
+
+    /**
+     * For staff and manager use only
+     * Displays the number of bookings, seats taken and seats available for each movie session
+     */
+    public void bookingSummaries() throws FileNotFoundException {
+<span class="fc" id="L303">        List&lt;String[]&gt; sessions = new ArrayList&lt;&gt;();</span>
+<span class="pc bpc" id="L304" title="1 of 2 branches missed.">        for (int i = 0; i &lt; this.transactions.size(); i++) {</span>
+<span class="nc bnc" id="L305" title="All 2 branches missed.">            if (!(this.transactions.get(i).getCancelReason().equals(&quot;&quot;))){</span>
+<span class="nc" id="L306">                continue;</span>
+            }
+<span class="nc" id="L308">            String[] session = new String[2];</span>
+<span class="nc" id="L309">            session[0] = this.transactions.get(i).getMovieName();</span>
+<span class="nc" id="L310">            session[1] = this.transactions.get(i).getMovieTime();</span>
+<span class="nc bnc" id="L311" title="All 2 branches missed.">            if (!sessions.contains(session)) {</span>
+<span class="nc" id="L312">                sessions.add(session);</span>
+            }
+        }
+
+<span class="pc bpc" id="L316" title="1 of 2 branches missed.">        if(sessions.size() == 0){</span>
+            try {
+//                File bookingsFile = new File(&quot;src/main/resources/bookings.txt&quot;);
+<span class="fc" id="L319">                FileWriter bookingsWriter = new FileWriter(this.bookingsFile);</span>
+<span class="fc" id="L320">                BufferedWriter bw = new BufferedWriter(bookingsWriter);</span>
+<span class="fc" id="L321">                bw.write(&quot;----------------------------------------------\nNo bookings were made today.\n----------------------------------------------&quot;);</span>
+<span class="fc" id="L322">                bw.close();</span>
+<span class="nc" id="L323">            } catch (FileNotFoundException e) {</span>
+<span class="nc" id="L324">                throw new FileNotFoundException(&quot;Error: Booking summaries could not be found.&quot;);</span>
+//                System.out.println(&quot;Error: Booking summaries could not be found.&quot;);
+<span class="nc" id="L326">            } catch (IOException e) {</span>
+<span class="nc" id="L327">                System.out.println(&quot;Error: Booking summaries could not be provided.&quot;);</span>
+<span class="fc" id="L328">            }</span>
+
+        }
+<span class="fc" id="L331">        String summariesString = &quot;----------------------------------------------\n&quot;;</span>
+<span class="pc bpc" id="L332" title="1 of 2 branches missed.">        for (int i = 0; i &lt; sessions.size(); i++) {</span>
+<span class="nc" id="L333">            int seatsBooked = 0;</span>
+<span class="nc" id="L334">            int seatsAvailable = 0;</span>
+<span class="nc bnc" id="L335" title="All 2 branches missed.">            for (Transaction transaction : this.transactions) {</span>
+<span class="nc bnc" id="L336" title="All 4 branches missed.">                if (transaction.getMovieName().equals(sessions.get(i)[0]) &amp;&amp; transaction.getMovieTime().equals(sessions.get(i)[1])) {</span>
+<span class="nc" id="L337">                    seatsBooked += transaction.getNumOfSeats();</span>
+                }
+<span class="nc" id="L339">            }</span>
+
+<span class="nc bnc" id="L341" title="All 2 branches missed.">            for (Movie m : this.movies) {</span>
+<span class="nc bnc" id="L342" title="All 2 branches missed.">                if (m.getName().equals(sessions.get(i)[0])) {</span>
+<span class="nc" id="L343">                    seatsAvailable = m.numOfSeats();</span>
+                }
+<span class="nc" id="L345">            }</span>
+
+<span class="nc" id="L347">            boolean inBookings = false;</span>
+<span class="nc bnc" id="L348" title="All 2 branches missed.">            if (summariesString.contains(sessions.get(i)[0])) {</span>
+<span class="nc" id="L349">                inBookings = true;</span>
+            }
+
+<span class="nc bnc" id="L352" title="All 2 branches missed.">            if (inBookings == false) {</span>
+<span class="nc" id="L353">                summariesString += &quot;Movie: &quot; + sessions.get(i)[0] +</span>
+<span class="nc" id="L354">                        &quot;\nSession Time: &quot; + sessions.get(i)[1] +</span>
+<span class="nc" id="L355">                        &quot;\nNumber of Seats Booked: &quot; + Integer.toString(seatsBooked) +</span>
+<span class="nc" id="L356">                        &quot;\nNumber of Seats Available: &quot; + Integer.toString(seatsAvailable) +</span>
+                        &quot;\n----------------------------------------------\n&quot;;
+            }
+            try {
+//                File bookingsFile = new File(&quot;src/main/resources/bookings.txt&quot;);
+<span class="nc" id="L361">                FileWriter bookingsWriter = new FileWriter(this.bookingsFile);</span>
+<span class="nc" id="L362">                BufferedWriter bw = new BufferedWriter(bookingsWriter);</span>
+<span class="nc" id="L363">                bw.write(summariesString);</span>
+<span class="nc" id="L364">                bw.close();</span>
+<span class="nc" id="L365">            } catch (FileNotFoundException e) {</span>
+<span class="nc" id="L366">                throw new FileNotFoundException(&quot;Error: Booking summaries could not be found.&quot;);</span>
+//                System.out.println(&quot;Error: Booking summaries could not be found.&quot;);
+<span class="nc" id="L368">            } catch (IOException e) {</span>
+<span class="nc" id="L369">                System.out.println(&quot;Error: Booking summaries could not be provided.&quot;);</span>
+<span class="nc" id="L370">            }</span>
+        }
+<span class="fc" id="L372">    }</span>
+
+    public void cancelledBookingSummary() {
+<span class="nc" id="L375">        List&lt;String[]&gt; sessions = new ArrayList&lt;&gt;();</span>
+<span class="nc bnc" id="L376" title="All 2 branches missed.">        for (Transaction transaction : this.transactions) {</span>
+<span class="nc bnc" id="L377" title="All 2 branches missed.">            if (!transaction.getCancelReason().equals(&quot;&quot;)) {</span>
+<span class="nc" id="L378">                String[] session = new String[3];</span>
+<span class="nc" id="L379">                SimpleDateFormat sdf = new SimpleDateFormat(&quot;dd/MM/yyyy HH:mm:ss z&quot;, Locale.ENGLISH);</span>
+<span class="nc" id="L380">                session[0] = sdf.format(transaction.getCancelDate());</span>
+<span class="nc" id="L381">                session[1] = &quot;Anonymous&quot;;</span>
+<span class="nc" id="L382">                session[2] = transaction.getCancelReason();</span>
+<span class="nc bnc" id="L383" title="All 2 branches missed.">                if (!sessions.contains(session)) {</span>
+<span class="nc" id="L384">                    sessions.add(session);</span>
+                }
+            }
+<span class="nc" id="L387">        }</span>
+
+        try {
+<span class="nc" id="L390">            File bookingsFile = new File(&quot;src/main/resources/cancelledbookings.txt&quot;);</span>
+<span class="nc" id="L391">            FileWriter bookingsWriter = new FileWriter(bookingsFile);</span>
+<span class="nc" id="L392">            BufferedWriter bw = new BufferedWriter(bookingsWriter);</span>
+<span class="nc" id="L393">            bw.write(&quot;----------------------------------------------\n&quot;);</span>
+<span class="nc bnc" id="L394" title="All 2 branches missed.">            for (int i = 0; i &lt; sessions.size(); i++) {</span>
+<span class="nc" id="L395">                bw.write(&quot;Date: &quot; + sessions.get(i)[0] + &quot;\n&quot;);</span>
+<span class="nc" id="L396">                bw.write(&quot;User: &quot; + sessions.get(i)[1] + &quot;\n&quot;);</span>
+<span class="nc" id="L397">                bw.write(&quot;Cancellation reason: &quot; + sessions.get(i)[2] + &quot;\n&quot;);</span>
+<span class="nc" id="L398">                bw.write(&quot;----------------------------------------------\n&quot;);</span>
+            }
+<span class="nc" id="L400">            bw.close();</span>
+        }
+<span class="nc" id="L402">        catch (IOException e) {</span>
+<span class="nc" id="L403">            System.out.println(&quot;\nError: Booking summaries could not be provided.\n&quot;);</span>
+<span class="nc" id="L404">        }</span>
+<span class="nc" id="L405">    }</span>
+
+    /**
+     * @param testing
+     * Displays a customer registration prompt
+     * Allows the user to register as a customer
+     * Stores the user's customer details into a local database
+     */
+    public void registerCustomer(Scanner userInput, boolean testing) {
+        String username;
+        String password;
+        String againPassword;
+<span class="fc" id="L417">        userInput.nextLine();</span>
+        while (true) { // The while loop ensures continual prompt in the case passwords do not match
+<span class="fc" id="L419">            System.out.println(&quot;Please enter a username and password to register as a new Fancy Cinemas customer.&quot;);</span>
+<span class="fc" id="L420">            System.out.print(&quot;Username: &quot;);</span>
+//            Scanner name = new Scanner(System.in);
+<span class="fc" id="L422">            username = userInput.nextLine();</span>
+<span class="pc bpc" id="L423" title="1 of 2 branches missed.">            if (testing) {</span>
+<span class="fc" id="L424">                System.out.print(&quot;Password: &quot;);</span>
+<span class="fc" id="L425">                password = userInput.nextLine();</span>
+<span class="fc" id="L426">                System.out.print(&quot;Confirm password: &quot;);</span>
+<span class="fc" id="L427">                againPassword = userInput.nextLine();</span>
+            }
+            else {
+<span class="nc" id="L430">                password = PasswordMasker.readPassword(&quot;Password: &quot;);</span>
+<span class="nc" id="L431">                againPassword = PasswordMasker.readPassword(&quot;Confirm password: &quot;);</span>
+            }
+
+            try {
+<span class="fc" id="L435">                BufferedReader customersReader = new BufferedReader(new FileReader(this.accountsFile));</span>
+                String line;
+<span class="fc" id="L437">                boolean unique = true;</span>
+<span class="fc bfc" id="L438" title="All 2 branches covered.">                while ((line = customersReader.readLine()) != null) {</span>
+<span class="fc" id="L439">                    String[] ls = line.split(&quot;,&quot;);</span>
+<span class="fc bfc" id="L440" title="All 2 branches covered.">                    if (ls[0].equals(username)) {</span>
+<span class="fc" id="L441">                        System.out.println(&quot;\nThis username is already taken. Please try again.\n&quot;);</span>
+<span class="fc" id="L442">                        unique = false;</span>
+<span class="fc" id="L443">                        break;</span>
+                    }
+<span class="fc bfc" id="L445" title="All 2 branches covered.">                    else if (username.matches(&quot;.*\\s.*&quot;)) {</span>
+<span class="fc" id="L446">                        System.out.println(&quot;\nUsername cannot contain spaces. Please try again.\n&quot;);</span>
+<span class="fc" id="L447">                        unique = false;</span>
+<span class="fc" id="L448">                        break;</span>
+                    }
+<span class="fc bfc" id="L450" title="All 2 branches covered.">                    else if (username.length() == 0) {</span>
+<span class="fc" id="L451">                        System.out.println(&quot;\nUsername cannot be empty. Please try again.\n&quot;);</span>
+<span class="fc" id="L452">                        unique = false;</span>
+<span class="fc" id="L453">                        break;</span>
+                    }
+<span class="fc" id="L455">                }</span>
+<span class="fc bfc" id="L456" title="All 2 branches covered.">                if (!unique) {</span>
+<span class="fc" id="L457">                    continue;</span>
+                }
+<span class="nc" id="L459">            } catch (IOException e) {</span>
+<span class="nc" id="L460">                System.out.println(&quot;Error: couldn't update accounts.csv&quot;);</span>
+<span class="nc" id="L461">                break;</span>
+<span class="fc" id="L462">            }</span>
+
+<span class="fc bfc" id="L464" title="All 2 branches covered.">            if (!password.equals(againPassword)) {</span>
+<span class="fc" id="L465">                System.out.println(&quot;\nPasswords do not match. Please try again.\n&quot;);</span>
+<span class="fc" id="L466">                continue;</span>
+<span class="fc bfc" id="L467" title="All 2 branches covered.">            } else if (password.matches(&quot;.*\\s.*&quot;)) {</span>
+<span class="fc" id="L468">                System.out.println(&quot;\nPassword cannot contain spaces. Please try again.\n&quot;);</span>
+<span class="fc" id="L469">                continue;</span>
+            }
+<span class="fc bfc" id="L471" title="All 2 branches covered.">            else if (password.length() == 0) {</span>
+<span class="fc" id="L472">                System.out.println(&quot;\nPassword cannot be empty. Please try again.\n&quot;);</span>
+<span class="fc" id="L473">                continue;</span>
+            }
+            else {
+//                name.close();
+                break;
+            }
+        }
+
+        // Opens the local customer database to store customer's details
+        try {
+<span class="fc" id="L483">            FileWriter csvWriter = new FileWriter(this.accountsFile, true);</span>
+<span class="fc" id="L484">            BufferedWriter bw = new BufferedWriter(csvWriter);</span>
+<span class="fc" id="L485">            bw.write(String.format(&quot;%s,%s,%s\n&quot;, username, password, &quot;0&quot;));</span>
+<span class="fc" id="L486">            bw.close();</span>
+<span class="fc" id="L487">            System.out.println(&quot;\nYou have successfully registered as a new customer. Welcome to Fancy Cinemas!&quot;);</span>
+<span class="fc" id="L488">            System.out.println(&quot;You will return to the main menu logged into your new account.\n&quot;);</span>
+        }
+<span class="nc" id="L490">        catch (IOException e) {</span>
+<span class="nc" id="L491">            System.out.println(&quot;Error: couldn't update accounts.csv&quot;);</span>
+<span class="fc" id="L492">        }</span>
+
+<span class="fc" id="L494">        Account acc = createNewAccount(username, password,0);</span>
+<span class="fc" id="L495">        this.accounts.add(acc);</span>
+<span class="fc" id="L496">        currAcc = acc;</span>
+<span class="fc" id="L497">        this.loggedIn = true;</span>
+
+<span class="fc" id="L499">    }</span>
+
+    public void loginUser() {
+<span class="nc" id="L502">        Scanner userInput = new Scanner(System.in);</span>
+<span class="nc bnc" id="L503" title="All 2 branches missed.">        while(!this.loggedIn){</span>
+<span class="nc" id="L504">            System.out.println(&quot;Please enter your valid username and password.&quot;);</span>
+<span class="nc" id="L505">            System.out.print(&quot;Username: &quot;);</span>
+<span class="nc" id="L506">            String username = userInput.nextLine();</span>
+<span class="nc bnc" id="L507" title="All 2 branches missed.">            for(Account a : this.accounts){</span>
+<span class="nc bnc" id="L508" title="All 2 branches missed.">                if (username.equals(a.getUsername())){</span>
+<span class="nc" id="L509">                    String password = PasswordMasker.readPassword(&quot;Password: &quot;);</span>
+<span class="nc bnc" id="L510" title="All 2 branches missed.">                    if (password.equals(a.getPassword())){</span>
+<span class="nc" id="L511">                        System.out.println(&quot;Success&quot;);</span>
+<span class="nc" id="L512">                        currAcc = a;</span>
+<span class="nc" id="L513">                        this.loggedIn = true;</span>
+                    }
+                    else{
+<span class="nc" id="L516">                        System.out.println(&quot;Password entered is incorrect&quot;);</span>
+                    }
+                }
+
+<span class="nc" id="L520">            }</span>
+<span class="nc" id="L521">        }</span>
+//        userInput.close();
+
+
+
+<span class="nc" id="L526">    }</span>
+
+//    /**
+//     * In the login method, pass the username and password into the checkRole.
+//     * @param username
+//     * @param password
+//     * @return
+//     */
+//    public String checkRole(String username, String password) {
+//        String staffFileName = &quot;src/main/resources/staff.csv&quot;;
+//        File staffFile = new File(staffFileName);
+//        try{
+//            Scanner csvStaffInput = new Scanner(staffFile);
+//            while(csvStaffInput.hasNext()){
+//                String staffInfo = csvStaffInput.next();
+//                String[] staffUserInfo = staffInfo.split(&quot;,&quot;);
+//                if(Objects.equals(username, staffUserInfo[0])){
+//                    if(Objects.equals(password, staffUserInfo[1])){
+//                        return &quot;S&quot;;
+//                    }
+//                }
+//            }
+//        } catch (FileNotFoundException e){
+//            System.out.println(&quot;Error: could not find staff.csv&quot;);
+//        }
+//
+//        String managerFileName = &quot;src/main/resources/managers.csv&quot;;
+//        File managerFile = new File(managerFileName);
+//        try{
+//            Scanner csvManagerInput = new Scanner(managerFile);
+//            while(csvManagerInput.hasNext()){
+//                String managerInfo = csvManagerInput.next();
+//                String[] managerUserInfo = managerInfo.split(&quot;,&quot;);
+//                if(Objects.equals(username, managerUserInfo[0])){
+//                    if(Objects.equals(password, managerUserInfo[1])){
+//                        return &quot;M&quot;;
+//                    }
+//                }
+//            }
+//        } catch (FileNotFoundException e){
+//            System.out.println(&quot;Error: could not find managers.csv&quot;);
+//        }
+//
+//        return &quot;Guest&quot;;
+//
+//
+//    }
+
+    public boolean getLogged(){
+<span class="fc" id="L575">        return this.loggedIn;</span>
+    }
+
+    public Account getCurrAcc() {
+<span class="fc" id="L579">        return this.currAcc;</span>
+    }
+
+    public void setLogged(boolean state){
+<span class="fc" id="L583">        this.loggedIn = state;</span>
+<span class="fc" id="L584">    }</span>
+
+    public void customerLoginLogic(Scanner userInput){
+<span class="fc" id="L587">        userInput.nextLine();</span>
+//        Scanner userInput = new Scanner(System.in);
+<span class="fc bfc" id="L589" title="All 2 branches covered.">        while(loggedIn){</span>
+<span class="fc" id="L590">            System.out.println(&quot;Select the page you would like to visit:\n&quot; +</span>
+                    &quot;  1. All movies\n&quot; +
+                    &quot;  2. Filter movies\n&quot; +
+                    &quot;  3. Book\n&quot; +
+                    &quot;  4. Cancel a booking\n&quot; +
+                    &quot;  5. Logout&quot;);
+
+<span class="fc" id="L597">            int logged = 0;</span>
+<span class="fc bfc" id="L598" title="All 2 branches covered.">            if (userInput.hasNextInt()) {</span>
+<span class="fc" id="L599">                logged = userInput.nextInt();</span>
+            }
+
+<span class="fc bfc" id="L602" title="All 2 branches covered.">            if (logged == 1){</span>
+<span class="fc" id="L603">                displayMovies();</span>
+            }
+<span class="fc bfc" id="L605" title="All 2 branches covered.">            else if (logged == 2) {</span>
+<span class="fc" id="L606">                filterMovies(userInput);</span>
+            }
+<span class="fc bfc" id="L608" title="All 2 branches covered.">            else if (logged == 3) {</span>
+<span class="fc" id="L609">                bookMovie(userInput);</span>
+            }
+<span class="fc bfc" id="L611" title="All 2 branches covered.">            else if (logged == 4) {</span>
+<span class="fc" id="L612">                cancelBooking(userInput);</span>
+            }
+<span class="fc bfc" id="L614" title="All 2 branches covered.">            else if (logged == 5) {</span>
+<span class="fc" id="L615">                this.loggedIn = false;</span>
+<span class="fc" id="L616">                System.out.println(&quot;You have logged out&quot;);</span>
+            }
+            else {
+<span class="fc" id="L619">                System.out.println(&quot;Error: Not a valid option.&quot;);</span>
+<span class="fc" id="L620">                userInput.nextLine();</span>
+            }
+
+<span class="fc" id="L623">        }</span>
+//        userInput.close();
+<span class="fc" id="L625">    }</span>
+
+    /**
+     * Returns movie object based off title
+     * @param title
+     * @return
+     */
+    public Movie getMovie(String title){
+        //need to do error checking
+<span class="nc" id="L634">        Movie found_movie = null;</span>
+<span class="nc bnc" id="L635" title="All 2 branches missed.">        for (Movie movie: movies){</span>
+<span class="nc bnc" id="L636" title="All 2 branches missed.">            if (movie.getTitle() == title){</span>
+<span class="nc" id="L637">                found_movie = movie;</span>
+            }
+<span class="nc" id="L639">        }</span>
+<span class="nc" id="L640">        return found_movie;</span>
+    }
+
+    /**
+     * This is the interface for manager/cinema staff when they want to
+     * insert/delete/modify movie data
+     */
+    public void editingMovies(){
+<span class="nc" id="L648">        Scanner userInput = new Scanner(System.in);</span>
+<span class="nc" id="L649">        System.out.println(&quot;Enter the number corresponding to the action you would like to take\n&quot;);</span>
+<span class="nc" id="L650">        System.out.println(&quot;1. Insert a new Movie\n2. Modify a current Movie\n3. Delete a Movie\n4. Return to menu&quot;);</span>
+
+<span class="nc" id="L652">        int input = userInput.nextInt();</span>
+<span class="nc bnc" id="L653" title="All 5 branches missed.">        switch (input) {</span>
+            case 1:
+<span class="nc" id="L655">                insertNewMovie();</span>
+<span class="nc" id="L656">                break;</span>
+            case 2:
+<span class="nc" id="L658">                modifyCurrentMovie();</span>
+<span class="nc" id="L659">                break;</span>
+            case 3:
+<span class="nc" id="L661">                deleteMovie();</span>
+<span class="nc" id="L662">                break;</span>
+            case 4:
+<span class="nc" id="L664">                return;</span>
+        }
+<span class="nc" id="L666">    }</span>
+
+    /**
+     * Method in charge of inserting new movies
+     * works but need to implement error checking
+     */
+    public void insertNewMovie(){
+        //getting new movie info line
+<span class="nc" id="L674">        String new_movie_line = &quot;&quot;;</span>
+<span class="nc" id="L675">        String[] new_movie_line_arr = new String[12];</span>
+
+<span class="nc" id="L677">        Scanner userInput = new Scanner(System.in);</span>
+
+<span class="nc" id="L679">        System.out.print(&quot;Enter Title: &quot;);</span>
+<span class="nc bnc" id="L680" title="All 2 branches missed.">        if (userInput.hasNext()) {</span>
+<span class="nc" id="L681">            String title = userInput.nextLine();</span>
+//            System.out.println(&quot;Entered Title: &quot;+title);
+<span class="nc" id="L683">            new_movie_line_arr[0] = title;</span>
+        }
+
+<span class="nc" id="L686">        System.out.print(&quot;Enter Synopsis: &quot;);</span>
+<span class="nc bnc" id="L687" title="All 2 branches missed.">        if (userInput.hasNext()) {</span>
+<span class="nc" id="L688">            String synopsis = userInput.nextLine();</span>
+//            System.out.println(&quot;Entered Synopsis: &quot;+synopsis);
+<span class="nc" id="L690">            new_movie_line_arr[1] = synopsis;</span>
+        }
+
+<span class="nc" id="L693">        System.out.print(&quot;Enter Classification: &quot;);</span>
+<span class="nc bnc" id="L694" title="All 2 branches missed.">        if (userInput.hasNext()) {</span>
+<span class="nc" id="L695">            String classification = userInput.nextLine();</span>
+//            System.out.println(&quot;Entered Classification: &quot;+classification);
+<span class="nc" id="L697">            new_movie_line_arr[2] = classification;</span>
+        }
+
+<span class="nc" id="L700">        System.out.print(&quot;Enter Release Date: &quot;);</span>
+<span class="nc bnc" id="L701" title="All 2 branches missed.">        if (userInput.hasNext()) {</span>
+<span class="nc" id="L702">            String release_date = userInput.nextLine();</span>
+//            System.out.println(&quot;Entered Release Date: &quot;+release_date);
+<span class="nc" id="L704">            new_movie_line_arr[3] = release_date;</span>
+        }
+
+<span class="nc" id="L707">        System.out.print(&quot;Enter Director: &quot;);</span>
+<span class="nc bnc" id="L708" title="All 2 branches missed.">        if (userInput.hasNext()) {</span>
+<span class="nc" id="L709">            String director = userInput.nextLine();</span>
+//            System.out.println(&quot;Entered Director: &quot;+director);
+<span class="nc" id="L711">            new_movie_line_arr[4] = director;</span>
+        }
+
+<span class="nc" id="L714">        System.out.print(&quot;Enter Cast: &quot;);</span>
+<span class="nc bnc" id="L715" title="All 2 branches missed.">        if (userInput.hasNext()) {</span>
+<span class="nc" id="L716">            String cast = userInput.nextLine();</span>
+//            System.out.println(&quot;Entered Cast: &quot;+cast);
+<span class="nc" id="L718">            new_movie_line_arr[5] = cast;</span>
+        }
+
+<span class="nc" id="L721">        System.out.print(&quot;Enter Upcoming Times: &quot;);</span>
+<span class="nc bnc" id="L722" title="All 2 branches missed.">        if (userInput.hasNext()) {</span>
+<span class="nc" id="L723">            String upcoming_times = userInput.nextLine();</span>
+//            System.out.println(&quot;Entered Upcoming Times: &quot;+upcoming_times);
+<span class="nc" id="L725">            new_movie_line_arr[6] = upcoming_times;</span>
+        }
+
+<span class="nc" id="L728">        System.out.print(&quot;Enter Screen Size: &quot;);</span>
+<span class="nc bnc" id="L729" title="All 2 branches missed.">        if (userInput.hasNext()) {</span>
+<span class="nc" id="L730">            String screen_size = userInput.nextLine();</span>
+//            System.out.println(&quot;Entered Screen Size: &quot;+screen_size);
+<span class="nc" id="L732">            new_movie_line_arr[7] = screen_size;</span>
+        }
+
+<span class="nc" id="L735">        System.out.print(&quot;Enter Cinema Rooms: &quot;);</span>
+<span class="nc bnc" id="L736" title="All 2 branches missed.">        if (userInput.hasNext()) {</span>
+<span class="nc" id="L737">            String cinema_rooms = userInput.nextLine();</span>
+//            System.out.println(&quot;Entered Cinema Rooms: &quot;+cinema_rooms);
+<span class="nc" id="L739">            new_movie_line_arr[8] = cinema_rooms;</span>
+        }
+
+<span class="nc" id="L742">        System.out.print(&quot;Enter Front Seats: &quot;);</span>
+<span class="nc bnc" id="L743" title="All 2 branches missed.">        if (userInput.hasNext()) {</span>
+<span class="nc" id="L744">            String front_seats = userInput.nextLine();</span>
+//            System.out.println(&quot;Entered Front Seats: &quot;+front_seats);
+<span class="nc" id="L746">            new_movie_line_arr[9] = front_seats;</span>
+        }
+
+<span class="nc" id="L749">        System.out.print(&quot;Enter Middle Seats: &quot;);</span>
+<span class="nc bnc" id="L750" title="All 2 branches missed.">        if (userInput.hasNext()) {</span>
+<span class="nc" id="L751">            String middle_seats = userInput.nextLine();</span>
+//            System.out.println(&quot;Entered Middle Seats: &quot;+middle_seats);
+<span class="nc" id="L753">            new_movie_line_arr[10] = middle_seats;</span>
+        }
+
+<span class="nc" id="L756">        System.out.print(&quot;Enter Rear Seats: &quot;);</span>
+<span class="nc bnc" id="L757" title="All 2 branches missed.">        if (userInput.hasNext()) {</span>
+<span class="nc" id="L758">            String rear_seats = userInput.nextLine();</span>
+//            System.out.println(&quot;Entered Rear Seats: &quot;+rear_seats);
+<span class="nc" id="L760">            new_movie_line_arr[11] = rear_seats;</span>
+        }
+
+<span class="nc" id="L763">        new_movie_line = String.join(&quot;;&quot;, new_movie_line_arr);</span>
+<span class="nc" id="L764">        Movie movie = createMovie(new_movie_line_arr);</span>
+<span class="nc" id="L765">        this.movies.add(movie);</span>
+
+<span class="nc" id="L767">        System.out.println(&quot;New movie inserted\n&quot;);</span>
+
+        try {
+<span class="nc" id="L770">            BufferedReader movieReader = new BufferedReader(new FileReader(this.moviesFile));</span>
+<span class="nc" id="L771">            StringBuffer stringBuffer = new StringBuffer();</span>
+
+            String line;
+
+            //movie info that already exists
+<span class="nc bnc" id="L776" title="All 2 branches missed.">            while ((line = movieReader.readLine()) != null) {</span>
+
+<span class="nc" id="L778">                stringBuffer.append(line);</span>
+<span class="nc" id="L779">                stringBuffer.append('\n');</span>
+
+            }
+
+            //adding in our new line
+<span class="nc" id="L784">            stringBuffer.append(new_movie_line);</span>
+<span class="nc" id="L785">            stringBuffer.append('\n');</span>
+<span class="nc" id="L786">            movieReader.close();</span>
+
+<span class="nc" id="L788">            FileOutputStream fileOut = new FileOutputStream(this.moviesFile);</span>
+<span class="nc" id="L789">            fileOut.write(stringBuffer.toString().getBytes());</span>
+<span class="nc" id="L790">            fileOut.close();</span>
+
+<span class="nc" id="L792">        } catch (IOException e) {</span>
+<span class="nc" id="L793">            System.out.println(&quot;Error: couldn't update accounts.csv&quot;);</span>
+<span class="nc" id="L794">        }</span>
+<span class="nc" id="L795">    }</span>
+
+    /**
+     * Helper method for modifying movie attributes
+     * that are in the form of lists
+     */
+
+    public String modifyingList(int refnum, String[] line,  int line_item_code){
+<span class="nc" id="L803">        Scanner userInput = new Scanner(System.in);</span>
+
+<span class="nc" id="L805">        System.out.println(&quot;Enter 1 to replace item or 2 to add to the item:&quot;);</span>
+<span class="nc" id="L806">        String result = &quot;&quot;;</span>
+<span class="nc bnc" id="L807" title="All 2 branches missed.">        if (userInput.hasNextInt()){</span>
+<span class="nc" id="L808">            int answer = userInput.nextInt();</span>
+
+            //replace
+<span class="nc bnc" id="L811" title="All 2 branches missed.">            if (answer == 1){</span>
+<span class="nc" id="L812">                System.out.println(&quot;Currently is: &quot;+ line[line_item_code]);</span>
+<span class="nc" id="L813">                System.out.println(&quot;\nEnter replacement: &quot;);</span>
+<span class="nc bnc" id="L814" title="All 2 branches missed.">                if (userInput.hasNext()) {</span>
+<span class="nc" id="L815">                    userInput.nextLine();</span>
+<span class="nc" id="L816">                    result = userInput.nextLine();</span>
+
+                }
+            }
+
+            //add to
+<span class="nc bnc" id="L822" title="All 2 branches missed.">            if (answer == 2){</span>
+<span class="nc" id="L823">                System.out.println(&quot;Currently is: &quot;+ line[line_item_code]);</span>
+<span class="nc" id="L824">                System.out.println(&quot;\nEnter addition: &quot;);</span>
+                //NOT WORKING!!!!!!
+<span class="nc" id="L826">                userInput.nextLine();</span>
+<span class="nc bnc" id="L827" title="All 2 branches missed.">                if (userInput.hasNext()){</span>
+
+<span class="nc" id="L829">                    String addition = userInput.nextLine();</span>
+<span class="nc" id="L830">                    System.out.println(&quot;Addition is: &quot; + addition);</span>
+<span class="nc" id="L831">                    result = line[line_item_code] + &quot;,&quot;+ addition;</span>
+
+                }
+            }
+
+        }
+
+<span class="nc" id="L838">        System.out.println(&quot;Result: &quot;+result);</span>
+<span class="nc" id="L839">        return result;</span>
+    }
+
+    /**
+     * Method in charge of modifying current movies
+     */
+    public void modifyCurrentMovie(){
+
+<span class="nc" id="L847">        Map&lt;Integer, Movie&gt; movie_ref = new HashMap&lt;Integer, Movie&gt;();</span>
+
+        //filling out hashmap with movies and references
+<span class="nc" id="L850">        int i = 0;</span>
+<span class="nc bnc" id="L851" title="All 2 branches missed.">        for (Movie movie : movies) {</span>
+<span class="nc" id="L852">            movie_ref.put(i, movie);</span>
+<span class="nc" id="L853">            i += 1;</span>
+<span class="nc" id="L854">        }</span>
+
+<span class="nc" id="L856">        Iterator iterator = movie_ref.entrySet().iterator();</span>
+
+<span class="nc" id="L858">        System.out.format(&quot;%-8s%-25s%-25s\n&quot;,&quot;Ref Num&quot;, &quot;Title&quot;, &quot;Upcoming times&quot;);</span>
+<span class="nc" id="L859">        System.out.println(&quot;--------------------------------------------------------------&quot;);</span>
+<span class="nc bnc" id="L860" title="All 2 branches missed.">        while (iterator.hasNext()) {</span>
+<span class="nc" id="L861">            Map.Entry pair = (Map.Entry) iterator.next();</span>
+<span class="nc" id="L862">            Movie movie1 = (Movie) pair.getValue();</span>
+<span class="nc" id="L863">            System.out.format(&quot;%-8s%-50s\n&quot;, pair.getKey(),movie1.getCondensedMovieInformation());</span>
+<span class="nc" id="L864">        }</span>
+
+<span class="nc" id="L866">        System.out.print(&quot;Enter reference number of movie you would like to modify: &quot;);</span>
+<span class="nc" id="L867">        Scanner userInput = new Scanner(System.in);</span>
+
+<span class="nc" id="L869">        int refnum = 100;</span>
+<span class="nc bnc" id="L870" title="All 2 branches missed.">        if (userInput.hasNextInt()) {</span>
+<span class="nc" id="L871">            refnum = userInput.nextInt();</span>
+<span class="nc" id="L872">            System.out.println(&quot;Selected Movie Current Data:\n&quot;);</span>
+<span class="nc" id="L873">            System.out.println(movie_ref.get(refnum).getMovieInformation());</span>
+        }
+
+<span class="nc" id="L876">        System.out.println(&quot;Enter reference number relating to what you would like to modify:\n&quot;);</span>
+<span class="nc" id="L877">        System.out.println(&quot;1. Title\n2. Synopsis\n3. Classification\n4. Release Date\n5. Director\n6. Cast&quot; +</span>
+                &quot;\n7. Screen Size\n8. Upcoming Times\n9. Cinema Rooms\n10. Available front seats\n11. Available middle seats\n12. Available rear seats\n&quot;);
+
+
+        try {
+<span class="nc" id="L882">            BufferedReader movieReader = new BufferedReader(new FileReader(this.moviesFile));</span>
+<span class="nc" id="L883">            StringBuffer stringBuffer = new StringBuffer();</span>
+
+            String line;
+
+            //getting relevant line from file
+<span class="nc bnc" id="L888" title="All 2 branches missed.">            while ((line = movieReader.readLine()) != null) {</span>
+
+<span class="nc" id="L890">                String[] ls = line.split(&quot;;&quot;);</span>
+
+<span class="nc bnc" id="L892" title="All 2 branches missed.">                if (ls[0].equals(movie_ref.get(refnum).getTitle())) {</span>
+
+                    //now that we have relevant line, got to determine what part to change
+<span class="nc" id="L895">                    int input = userInput.nextInt();</span>
+                    String change;
+<span class="nc bnc" id="L897" title="All 13 branches missed.">                    switch (input) {</span>
+                        case 1:
+<span class="nc" id="L899">                            System.out.println(&quot;Enter New Title:&quot;);</span>
+<span class="nc bnc" id="L900" title="All 2 branches missed.">                            if (userInput.hasNext()){</span>
+
+<span class="nc bnc" id="L902" title="All 2 branches missed.">                                if (userInput.hasNext()){</span>
+<span class="nc" id="L903">                                    userInput.nextLine();</span>
+<span class="nc" id="L904">                                    String title_input = userInput.nextLine();</span>
+<span class="nc" id="L905">                                    ls[0] = title_input;</span>
+<span class="nc" id="L906">                                    this.movies.get(refnum).setName(ls[0]);</span>
+<span class="nc" id="L907">                                }</span>
+
+                            }
+                            break;
+
+                        case 2:
+<span class="nc" id="L913">                            System.out.println(&quot;Enter New Synopsis:&quot;);</span>
+<span class="nc bnc" id="L914" title="All 2 branches missed.">                            if (userInput.hasNext()){</span>
+
+<span class="nc bnc" id="L916" title="All 2 branches missed.">                                if (userInput.hasNext()){</span>
+<span class="nc" id="L917">                                    userInput.nextLine();</span>
+<span class="nc" id="L918">                                    String synopsis_input = userInput.nextLine();</span>
+<span class="nc" id="L919">                                    ls[1] = synopsis_input;</span>
+<span class="nc" id="L920">                                    this.movies.get(refnum).setSynopsis(ls[1]);</span>
+<span class="nc" id="L921">                                }</span>
+
+                            }
+                            break;
+
+                        case 3:
+<span class="nc" id="L927">                            System.out.println(&quot;Enter New Classification:&quot;);</span>
+<span class="nc bnc" id="L928" title="All 2 branches missed.">                            if (userInput.hasNext()){</span>
+
+<span class="nc bnc" id="L930" title="All 2 branches missed.">                                if (userInput.hasNext()){</span>
+<span class="nc" id="L931">                                    userInput.nextLine();</span>
+<span class="nc" id="L932">                                    String classification_input = userInput.nextLine();</span>
+<span class="nc" id="L933">                                    ls[2] = classification_input;</span>
+<span class="nc" id="L934">                                    this.movies.get(refnum).setClassification(ls[2]);</span>
+<span class="nc" id="L935">                                }</span>
+
+                            }
+                            break;
+
+                        case 4:
+<span class="nc" id="L941">                            System.out.println(&quot;Enter New Release Date:&quot;);</span>
+<span class="nc bnc" id="L942" title="All 2 branches missed.">                            if (userInput.hasNext()){</span>
+
+<span class="nc bnc" id="L944" title="All 2 branches missed.">                                if (userInput.hasNext()){</span>
+<span class="nc" id="L945">                                    userInput.nextLine();</span>
+<span class="nc" id="L946">                                    String release_date_input = userInput.nextLine();</span>
+<span class="nc" id="L947">                                    ls[3] = release_date_input;</span>
+<span class="nc" id="L948">                                    this.movies.get(refnum).setReleaseDate(ls[3]);</span>
+<span class="nc" id="L949">                                }</span>
+
+                            }
+                            break;
+
+                        case 5:
+<span class="nc" id="L955">                            System.out.println(&quot;Enter New Director:&quot;);</span>
+<span class="nc bnc" id="L956" title="All 2 branches missed.">                            if (userInput.hasNext()){</span>
+
+<span class="nc bnc" id="L958" title="All 2 branches missed.">                                if (userInput.hasNext()){</span>
+<span class="nc" id="L959">                                    userInput.nextLine();</span>
+<span class="nc" id="L960">                                    String director_input = userInput.nextLine();</span>
+<span class="nc" id="L961">                                    ls[4] = director_input;</span>
+<span class="nc" id="L962">                                    this.movies.get(refnum).setDirector(ls[4]);</span>
+<span class="nc" id="L963">                                }</span>
+
+                            }
+                            break;
+
+                        case 6:
+<span class="nc" id="L969">                            System.out.println(&quot;Enter New Cast:&quot;);</span>
+<span class="nc bnc" id="L970" title="All 2 branches missed.">                            if (userInput.hasNext()){</span>
+
+<span class="nc bnc" id="L972" title="All 2 branches missed.">                                if (userInput.hasNext()){</span>
+<span class="nc" id="L973">                                    userInput.nextLine();</span>
+<span class="nc" id="L974">                                    String cast_input = userInput.nextLine();</span>
+<span class="nc" id="L975">                                    ls[5] = cast_input;</span>
+<span class="nc" id="L976">                                    this.movies.get(refnum).setCast(ls[5]);</span>
+<span class="nc" id="L977">                                }</span>
+
+                            }
+                            break;
+
+
+                        case 7:
+<span class="nc" id="L984">                            System.out.println(&quot;Enter New Screen Size:&quot;);</span>
+<span class="nc bnc" id="L985" title="All 2 branches missed.">                            if (userInput.hasNext()){</span>
+
+<span class="nc bnc" id="L987" title="All 2 branches missed.">                                if (userInput.hasNext()){</span>
+<span class="nc" id="L988">                                    userInput.nextLine();</span>
+<span class="nc" id="L989">                                    String screen_size_input = userInput.nextLine();</span>
+<span class="nc" id="L990">                                    ls[7] = screen_size_input;</span>
+<span class="nc" id="L991">                                    this.movies.get(refnum).setScreenSize(ls[7]);</span>
+<span class="nc" id="L992">                                }</span>
+
+                            }
+                            break;
+
+                        case 8:
+<span class="nc" id="L998">                            ls[6] = modifyingList(refnum, ls, 6);</span>
+<span class="nc" id="L999">                            this.movies.get(refnum).setUpcomingTimes(ls[6]);</span>
+<span class="nc" id="L1000">                            break;</span>
+
+                        case 9:
+<span class="nc" id="L1003">                            ls[8] = modifyingList(refnum, ls, 8);</span>
+<span class="nc" id="L1004">                            this.movies.get(refnum).setCinemaRooms(ls[8]);</span>
+<span class="nc" id="L1005">                            break;</span>
+
+                        case 10:
+<span class="nc" id="L1008">                            System.out.print(&quot;Enter new front seats: &quot;);</span>
+<span class="nc bnc" id="L1009" title="All 2 branches missed.">                            if (userInput.hasNext()){</span>
+
+<span class="nc bnc" id="L1011" title="All 2 branches missed.">                                if (userInput.hasNext()){</span>
+<span class="nc" id="L1012">                                    userInput.nextLine();</span>
+<span class="nc" id="L1013">                                    String frontSeatsInput = userInput.nextLine();</span>
+<span class="nc" id="L1014">                                    ls[9] = frontSeatsInput;</span>
+<span class="nc" id="L1015">                                    this.movies.get(refnum).setSeatsModify(ls[9], ls[10], ls[11]);</span>
+<span class="nc" id="L1016">                                }</span>
+
+                            }
+                            break;
+                        case 11:
+<span class="nc" id="L1021">                            System.out.print(&quot;Enter new middle seats: &quot;);</span>
+<span class="nc bnc" id="L1022" title="All 2 branches missed.">                            if (userInput.hasNext()){</span>
+
+<span class="nc bnc" id="L1024" title="All 2 branches missed.">                                if (userInput.hasNext()){</span>
+<span class="nc" id="L1025">                                    userInput.nextLine();</span>
+<span class="nc" id="L1026">                                    String middleSeatsInput = userInput.nextLine();</span>
+<span class="nc" id="L1027">                                    ls[10] = middleSeatsInput;</span>
+<span class="nc" id="L1028">                                    this.movies.get(refnum).setSeatsModify(ls[9], ls[10], ls[11]);</span>
+
+<span class="nc" id="L1030">                                }</span>
+
+                            }
+                            break;
+                        case 12:
+<span class="nc" id="L1035">                            System.out.print(&quot;Enter new rear seats: &quot;);</span>
+<span class="nc bnc" id="L1036" title="All 2 branches missed.">                            if (userInput.hasNext()){</span>
+
+<span class="nc bnc" id="L1038" title="All 2 branches missed.">                                if (userInput.hasNext()){</span>
+<span class="nc" id="L1039">                                    userInput.nextLine();</span>
+<span class="nc" id="L1040">                                    String rearSeatsInput = userInput.nextLine();</span>
+<span class="nc" id="L1041">                                    ls[11] = rearSeatsInput;</span>
+<span class="nc" id="L1042">                                    this.movies.get(refnum).setSeatsModify(ls[9], ls[10], ls[11]);</span>
+
+                                }
+
+                            }
+                            break;
+                    }
+
+
+<span class="nc" id="L1051">                    String new_line = String.join(&quot;;&quot;, ls);</span>
+<span class="nc" id="L1052">                    line = new_line;</span>
+<span class="nc" id="L1053">                    System.out.println(&quot;Updated Information: \n&quot;);</span>
+<span class="nc" id="L1054">                    System.out.println(new_line);</span>
+                    //System.out.println(updated_times + &quot;\n&quot;);
+<span class="nc" id="L1056">                    System.out.println(&quot;\nSuccessfully updated. Update will be visible once system is restarted.\n&quot;);</span>
+                }
+
+<span class="nc" id="L1059">                stringBuffer.append(line);</span>
+<span class="nc" id="L1060">                stringBuffer.append('\n');</span>
+
+<span class="nc" id="L1062">            }</span>
+<span class="nc" id="L1063">            movieReader.close();</span>
+
+<span class="nc" id="L1065">            FileOutputStream fileOut = new FileOutputStream(this.moviesFile);</span>
+<span class="nc" id="L1066">            fileOut.write(stringBuffer.toString().getBytes());</span>
+<span class="nc" id="L1067">            fileOut.close();</span>
+
+<span class="nc" id="L1069">        } catch (IOException | java.text.ParseException e) {</span>
+<span class="nc" id="L1070">            System.out.println(&quot;Error: couldn't update movies.csv&quot;);</span>
+<span class="nc" id="L1071">        }</span>
+
+<span class="nc" id="L1073">    }</span>
+
+    /**
+     * Method in charge of deleting movies
+     */
+    public void deleteMovie(){
+<span class="nc" id="L1079">        Map&lt;Integer, Movie&gt; movie_ref = new HashMap&lt;Integer, Movie&gt;();</span>
+
+        //filling out hashmap with movies and references
+<span class="nc" id="L1082">        int i = 0;</span>
+<span class="nc bnc" id="L1083" title="All 2 branches missed.">        for (Movie movie : movies) {</span>
+<span class="nc" id="L1084">            movie_ref.put(i, movie);</span>
+<span class="nc" id="L1085">            i += 1;</span>
+<span class="nc" id="L1086">        }</span>
+
+<span class="nc" id="L1088">        Iterator iterator = movie_ref.entrySet().iterator();</span>
+
+        //printing out movies and references to the user
+<span class="nc" id="L1091">        System.out.format(&quot;%-8s%-25s%-25s\n&quot;,&quot;Ref Num&quot;, &quot;Title&quot;, &quot;Upcoming times&quot;);</span>
+<span class="nc" id="L1092">        System.out.println(&quot;--------------------------------------------------------------&quot;);</span>
+<span class="nc bnc" id="L1093" title="All 2 branches missed.">        while (iterator.hasNext()) {</span>
+<span class="nc" id="L1094">            Map.Entry pair = (Map.Entry) iterator.next();</span>
+<span class="nc" id="L1095">            Movie movie1 = (Movie) pair.getValue();</span>
+<span class="nc" id="L1096">            System.out.format(&quot;%-8s%-50s\n&quot;, pair.getKey(),movie1.getCondensedMovieInformation());</span>
+<span class="nc" id="L1097">        }</span>
+<span class="nc" id="L1098">        Scanner userInput = new Scanner(System.in);</span>
+<span class="nc" id="L1099">        System.out.print(&quot;Enter the reference number of the film you would like to delete: &quot;);</span>
+<span class="nc" id="L1100">        int refnum = 100;</span>
+<span class="nc bnc" id="L1101" title="All 2 branches missed.">        if (userInput.hasNextInt()) {</span>
+<span class="nc" id="L1102">            refnum = userInput.nextInt();</span>
+        }
+
+        try {
+<span class="nc" id="L1106">            BufferedReader movieReader = new BufferedReader(new FileReader(this.moviesFile));</span>
+<span class="nc" id="L1107">            StringBuffer stringBuffer = new StringBuffer();</span>
+
+            String line;
+
+            //getting relevant line
+<span class="nc bnc" id="L1112" title="All 2 branches missed.">            while ((line = movieReader.readLine()) != null) {</span>
+
+<span class="nc" id="L1114">                String[] ls = line.split(&quot;;&quot;);</span>
+
+<span class="nc bnc" id="L1116" title="All 2 branches missed.">                if (!(ls[0].equals(movie_ref.get(refnum).getTitle()))) {</span>
+<span class="nc" id="L1117">                    stringBuffer.append(line);</span>
+<span class="nc" id="L1118">                    stringBuffer.append('\n');</span>
+                }
+
+<span class="nc" id="L1121">            }</span>
+<span class="nc" id="L1122">            this.movies.remove(refnum);</span>
+<span class="nc" id="L1123">            movieReader.close();</span>
+
+<span class="nc" id="L1125">            FileOutputStream fileOut = new FileOutputStream(this.moviesFile);</span>
+<span class="nc" id="L1126">            fileOut.write(stringBuffer.toString().getBytes());</span>
+<span class="nc" id="L1127">            fileOut.close();</span>
+
+<span class="nc" id="L1129">        } catch (IOException e) {</span>
+<span class="nc" id="L1130">            System.out.println(&quot;Error: couldn't update movies.csv&quot;);</span>
+<span class="nc" id="L1131">        }</span>
+
+<span class="nc" id="L1133">    }</span>
+
+    /***
+     * Logic to deal with adding new shows
+     * for cinema staff and manager
+     */
+    public void addNewShows() {
+
+<span class="nc" id="L1141">        Map&lt;Integer, Movie&gt; movie_ref = new HashMap&lt;Integer, Movie&gt;();</span>
+
+        //filling out hashmap with movies and references
+<span class="nc" id="L1144">        int i = 0;</span>
+<span class="nc bnc" id="L1145" title="All 2 branches missed.">        for (Movie movie : movies) {</span>
+<span class="nc" id="L1146">            movie_ref.put(i, movie);</span>
+<span class="nc" id="L1147">            i += 1;</span>
+<span class="nc" id="L1148">        }</span>
+
+<span class="nc" id="L1150">        Iterator iterator = movie_ref.entrySet().iterator();</span>
+
+        //printing out movies and references to the user
+<span class="nc" id="L1153">        System.out.format(&quot;%-8s%-25s%-25s\n&quot;,&quot;Ref Num&quot;, &quot;Title&quot;, &quot;Upcoming times&quot;);</span>
+<span class="nc" id="L1154">        System.out.println(&quot;--------------------------------------------------------------&quot;);</span>
+<span class="nc bnc" id="L1155" title="All 2 branches missed.">        while (iterator.hasNext()) {</span>
+<span class="nc" id="L1156">            Map.Entry pair = (Map.Entry) iterator.next();</span>
+<span class="nc" id="L1157">            Movie movie1 = (Movie) pair.getValue();</span>
+<span class="nc" id="L1158">            System.out.format(&quot;%-8s%-50s\n&quot;, pair.getKey(),movie1.getCondensedMovieInformation());</span>
+<span class="nc" id="L1159">        }</span>
+<span class="nc" id="L1160">        Scanner userInput = new Scanner(System.in);</span>
+<span class="nc" id="L1161">        System.out.print(&quot;Enter the reference number of the film you would like to add a show for: &quot;);</span>
+
+        //going to have to add error checking to make sure
+        //all input that is given is correct ofc
+
+<span class="nc" id="L1166">        int refnum = 100;</span>
+<span class="nc bnc" id="L1167" title="All 2 branches missed.">        if (userInput.hasNextInt()) {</span>
+<span class="nc" id="L1168">            refnum = userInput.nextInt();</span>
+<span class="nc" id="L1169">            System.out.print(&quot;Adding show for the following movie: &quot;);</span>
+<span class="nc" id="L1170">            System.out.println(movie_ref.get(refnum).getCondensedMovieInformation());</span>
+        }
+
+<span class="nc" id="L1173">        Scanner userInput2 = new Scanner(System.in);</span>
+<span class="nc" id="L1174">        System.out.print(&quot;Enter the show time you would like to add (In form 'hh:mm:'): &quot;);</span>
+<span class="nc" id="L1175">        Boolean time_given = false;</span>
+<span class="nc" id="L1176">        String time = &quot;&quot;;</span>
+
+<span class="nc bnc" id="L1178" title="All 2 branches missed.">        if (userInput2.hasNext()) {</span>
+<span class="nc" id="L1179">            time = userInput2.nextLine();</span>
+<span class="nc" id="L1180">            System.out.println(&quot;Entering &quot; + time + &quot; into the system.&quot;);</span>
+<span class="nc" id="L1181">            time_given = true;</span>
+        }
+
+        String updated_times;
+
+        //if we have given a time, can save it into the system
+<span class="nc bnc" id="L1187" title="All 2 branches missed.">        if (time_given) {</span>
+
+            try {
+<span class="nc" id="L1190">                BufferedReader movieReader = new BufferedReader(new FileReader(this.moviesFile));</span>
+<span class="nc" id="L1191">                StringBuffer stringBuffer = new StringBuffer();</span>
+
+                String line;
+
+                //getting relevant line
+<span class="nc bnc" id="L1196" title="All 2 branches missed.">                while ((line = movieReader.readLine()) != null) {</span>
+
+<span class="nc" id="L1198">                    String[] ls = line.split(&quot;;&quot;);</span>
+
+<span class="nc bnc" id="L1200" title="All 2 branches missed.">                    if (ls[0].equals(movie_ref.get(refnum).getTitle())) {</span>
+
+                        //updating upcoming times
+<span class="nc" id="L1203">                        updated_times = ls[6] + &quot;,&quot; + time;</span>
+<span class="nc" id="L1204">                        ls[6] = updated_times;</span>
+<span class="nc" id="L1205">                        String new_line = String.join(&quot;;&quot;, ls);</span>
+<span class="nc" id="L1206">                        line = new_line;</span>
+<span class="nc" id="L1207">                        System.out.println(&quot;\n&quot; + movie_ref.get(refnum).getTitle());</span>
+<span class="nc" id="L1208">                        System.out.println(&quot;Updated Movie Upcoming Times: \n&quot;);</span>
+<span class="nc" id="L1209">                        System.out.println(updated_times + &quot;\n&quot;);</span>
+<span class="nc" id="L1210">                        System.out.println(&quot;Successfully updated. Update will be visible once system is restarted.\n&quot;);</span>
+                    }
+
+<span class="nc" id="L1213">                    stringBuffer.append(line);</span>
+<span class="nc" id="L1214">                    stringBuffer.append('\n');</span>
+
+<span class="nc" id="L1216">                }</span>
+<span class="nc" id="L1217">                movieReader.close();</span>
+
+<span class="nc" id="L1219">                FileOutputStream fileOut = new FileOutputStream(this.moviesFile);</span>
+<span class="nc" id="L1220">                fileOut.write(stringBuffer.toString().getBytes());</span>
+<span class="nc" id="L1221">                fileOut.close();</span>
+
+<span class="nc" id="L1223">            } catch (IOException e) {</span>
+<span class="nc" id="L1224">                System.out.println(&quot;Error: couldn't update movies.csv&quot;);</span>
+<span class="nc" id="L1225">            }</span>
+
+        }
+<span class="nc" id="L1228">    }</span>
+
+    public void setCurrAcc(Account account) {
+<span class="fc" id="L1231">        this.currAcc = account;</span>
+<span class="fc" id="L1232">    }</span>
+
+    public void userTimeout(Movie movie, String time, String seat, int numOfSeats) {
+<span class="fc" id="L1235">        System.out.println(&quot;Booking has timed out.&quot;);</span>
+<span class="fc" id="L1236">        String cancelReason = &quot;user timeout&quot;;</span>
+<span class="fc" id="L1237">        Transaction transaction = createTranscation(movie, time, seat, numOfSeats, cancelReason);</span>
+<span class="fc" id="L1238">        transactions.add(transaction);</span>
+
+<span class="fc" id="L1240">        Date date = new Date(System.currentTimeMillis());</span>
+<span class="fc" id="L1241">        transaction.setCancelDate(date);</span>
+<span class="fc" id="L1242">    }</span>
+
+    public void bookMovie(Scanner userInput) {
+        // list all movie names
+        // check if the input is in range of 0 to length of movies array
+        // display upcoming time for movie selected
+        // check if it is in range of the length of the movies upcoming time array
+        // check number of seats
+        // generate random transaction id
+        // create the transaction
+        // add to a list of transactions in cinema
+        // add to a list of bookings in account
+
+<span class="fc" id="L1255">        userInput.nextLine();</span>
+<span class="fc" id="L1256">        List&lt;String&gt; movieNames = new ArrayList&lt;String&gt;();</span>
+<span class="fc bfc" id="L1257" title="All 2 branches covered.">        for (Movie movie : movies) {</span>
+<span class="fc" id="L1258">            movieNames.add(movie.getName());</span>
+<span class="fc" id="L1259">        }</span>
+
+//        Scanner userInput = new Scanner(System.in);
+<span class="fc" id="L1262">        boolean bookedMovie = false;</span>
+<span class="fc bfc" id="L1263" title="All 2 branches covered.">        while (!bookedMovie) {</span>
+<span class="fc" id="L1264">            System.out.println(&quot;Select a movie you would like to book:&quot;);</span>
+<span class="fc bfc" id="L1265" title="All 2 branches covered.">            for (int i = 0; i &lt; movieNames.size(); i++) {</span>
+<span class="fc" id="L1266">                System.out.println(&quot;  &quot; + (i + 1) + &quot;. &quot; + movieNames.get(i));</span>
+            }
+<span class="fc" id="L1268">            System.out.println(&quot;  &quot; + (movieNames.size() + 1) + &quot;. Back to home page&quot;);</span>
+
+<span class="fc" id="L1270">            int entered = 0;</span>
+<span class="fc" id="L1271">            long currentTime = System.currentTimeMillis();</span>
+<span class="fc bfc" id="L1272" title="All 2 branches covered.">            if (userInput.hasNextInt()) {</span>
+<span class="fc" id="L1273">                entered = userInput.nextInt();</span>
+<span class="pc bpc" id="L1274" title="1 of 2 branches missed.">                if (System.currentTimeMillis() - currentTime &gt; timeoutTime) {</span>
+<span class="nc" id="L1275">                    userTimeout(null, null, null, 0);</span>
+<span class="nc" id="L1276">                    return;</span>
+                }
+            } else {
+<span class="fc" id="L1279">                userInput.nextLine();</span>
+<span class="pc bpc" id="L1280" title="1 of 2 branches missed.">                if (System.currentTimeMillis() - currentTime &gt; timeoutTime) {</span>
+<span class="nc" id="L1281">                    userTimeout(null, null, null, 0);</span>
+<span class="nc" id="L1282">                    return;</span>
+                }
+<span class="fc" id="L1284">                System.out.println(&quot;Error: Not a valid option.\n&quot;);</span>
+<span class="fc" id="L1285">                continue;</span>
+            }
+
+<span class="fc bfc" id="L1288" title="All 4 branches covered.">            if (entered &gt; 0 &amp;&amp; entered &lt;= movieNames.size() + 1) {</span>
+<span class="fc bfc" id="L1289" title="All 2 branches covered.">                if (entered == movieNames.size() + 1) {</span>
+<span class="fc" id="L1290">                    System.out.println(&quot;Returning back to customer home page.\n&quot;);</span>
+<span class="fc" id="L1291">                    return;</span>
+                }
+
+<span class="fc" id="L1294">                pickBookingTime(userInput, entered - 1);</span>
+<span class="fc" id="L1295">                bookedMovie = true;</span>
+            } else {
+<span class="fc" id="L1297">                System.out.println(&quot;Error: Not a valid option.\n&quot;);</span>
+<span class="fc" id="L1298">                continue;</span>
+            }
+<span class="fc" id="L1300">        }</span>
+<span class="fc" id="L1301">    }</span>
+
+    public void pickBookingTime(Scanner userInput, int movieIdx) {
+<span class="fc" id="L1304">        userInput.nextLine();</span>
+
+<span class="fc" id="L1306">        Movie movie = movies.get(movieIdx);</span>
+<span class="fc" id="L1307">        List&lt;String&gt; times = movie.getUpcomingTimes();</span>
+
+//        Scanner userInput = new Scanner(System.in);
+<span class="fc" id="L1310">        boolean choseTime = false;</span>
+<span class="fc bfc" id="L1311" title="All 2 branches covered.">        while (!choseTime) {</span>
+<span class="fc" id="L1312">            System.out.println(&quot;Select a time to book for the movie:&quot;);</span>
+<span class="fc bfc" id="L1313" title="All 2 branches covered.">            for (int i = 0; i &lt; times.size(); i++) {</span>
+<span class="fc" id="L1314">                System.out.println(&quot;  &quot; + (i + 1) + &quot;. &quot; + times.get(i));</span>
+            }
+<span class="fc" id="L1316">            System.out.println(&quot;  &quot; + (times.size() + 1) + &quot;. Back to home page&quot;);</span>
+
+<span class="fc" id="L1318">            int entered = 0;</span>
+<span class="fc" id="L1319">            long currentTime = System.currentTimeMillis();</span>
+<span class="fc bfc" id="L1320" title="All 2 branches covered.">            if (userInput.hasNextInt()) {</span>
+<span class="fc" id="L1321">                entered = userInput.nextInt();</span>
+<span class="pc bpc" id="L1322" title="1 of 2 branches missed.">                if (System.currentTimeMillis() - currentTime &gt; timeoutTime) {</span>
+<span class="nc" id="L1323">                    userTimeout(movie, null, null, 0);</span>
+<span class="nc" id="L1324">                    return;</span>
+                }
+            } else {
+<span class="fc" id="L1327">                userInput.nextLine();</span>
+<span class="pc bpc" id="L1328" title="1 of 2 branches missed.">                if (System.currentTimeMillis() - currentTime &gt; timeoutTime) {</span>
+<span class="nc" id="L1329">                    userTimeout(movie, null, null, 0);</span>
+<span class="nc" id="L1330">                    return;</span>
+                }
+<span class="fc" id="L1332">                System.out.println(&quot;Error: Not a valid option.\n&quot;);</span>
+<span class="fc" id="L1333">                continue;</span>
+            }
+
+<span class="fc bfc" id="L1336" title="All 4 branches covered.">            if (entered &gt; 0 &amp;&amp; entered &lt;= times.size() + 1) {</span>
+<span class="fc bfc" id="L1337" title="All 2 branches covered.">                if (entered == times.size() + 1) {</span>
+<span class="fc" id="L1338">                    System.out.println(&quot;Returning back to customer home page.\n&quot;);</span>
+<span class="fc" id="L1339">                    return;</span>
+                }
+
+//                pickBookingSeat(movie, entered - 1);
+<span class="fc" id="L1343">                bookingNumOfSeats(userInput, movie, entered - 1);</span>
+<span class="fc" id="L1344">                choseTime = true;</span>
+            } else {
+<span class="fc" id="L1346">                System.out.println(&quot;Error: Not a valid option.\n&quot;);</span>
+<span class="fc" id="L1347">                continue;</span>
+            }
+<span class="fc" id="L1349">        }</span>
+<span class="fc" id="L1350">    }</span>
+
+    public void bookingNumOfSeats(Scanner userInput, Movie movie, int timeIdx) {
+<span class="fc" id="L1353">        int tickets = 0;</span>
+<span class="fc" id="L1354">        userInput.nextLine();</span>
+//        Scanner userInput = new Scanner(System.in);
+<span class="fc" id="L1356">        boolean choseNumSeats = false;</span>
+<span class="fc bfc" id="L1357" title="All 2 branches covered.">        while (!choseNumSeats) {</span>
+<span class="fc" id="L1358">            System.out.println(&quot;Enter the number of seats you would like book.\n&quot; +</span>
+                    &quot;(Required to enter for all options. Split by comma. E.g. 0,0,1,1)\n&quot; +
+                    &quot;Child (under 12): $5\n&quot; +
+                    &quot;Student: $12\n&quot; +
+                    &quot;Adult: $20\n&quot; +
+                    &quot;Senior/Pensioner: $10\n&quot; +
+                    &quot;(Enter 'cancel' to return to the home page)&quot;);
+<span class="fc" id="L1365">            long currentTime = System.currentTimeMillis();</span>
+<span class="fc" id="L1366">            String selections = userInput.next();</span>
+<span class="pc bpc" id="L1367" title="1 of 2 branches missed.">            if (System.currentTimeMillis() - currentTime &gt; timeoutTime) {</span>
+<span class="nc" id="L1368">                userTimeout(movie, movie.getUpcomingTimes().get(timeIdx), null, 0);</span>
+<span class="nc" id="L1369">                return;</span>
+            }
+
+            // Split the selection input and convert to int
+<span class="fc" id="L1373">            List&lt;Integer&gt; numOfSeats = new ArrayList&lt;&gt;();</span>
+<span class="fc" id="L1374">            List&lt;Integer&gt; valueOfSeats = new ArrayList&lt;&gt;();</span>
+<span class="fc" id="L1375">            valueOfSeats.add(5);</span>
+<span class="fc" id="L1376">            valueOfSeats.add(12);</span>
+<span class="fc" id="L1377">            valueOfSeats.add(20);</span>
+<span class="fc" id="L1378">            valueOfSeats.add(10);</span>
+<span class="fc" id="L1379">            boolean invalid = false;</span>
+<span class="fc" id="L1380">            int totalSeats = 0;</span>
+<span class="fc bfc" id="L1381" title="All 2 branches covered.">            for (String s : selections.split(&quot;,&quot;)) {</span>
+                try {
+<span class="fc" id="L1383">                    int input = Integer.parseInt(s.trim());</span>
+<span class="fc bfc" id="L1384" title="All 2 branches covered.">                    if (input &lt; 0) {</span>
+<span class="fc" id="L1385">                        invalid = true;</span>
+<span class="fc" id="L1386">                        break;</span>
+                    }
+<span class="fc" id="L1388">                    numOfSeats.add(input);</span>
+<span class="fc" id="L1389">                    totalSeats += input;</span>
+<span class="fc" id="L1390">                } catch (NumberFormatException e) {</span>
+<span class="fc bfc" id="L1391" title="All 2 branches covered.">                    if (s.equals(&quot;cancel&quot;)) {</span>
+<span class="fc" id="L1392">                        System.out.println(&quot;Returning back to customer home page.\n&quot;);</span>
+<span class="fc" id="L1393">                        return;</span>
+                    }
+<span class="fc" id="L1395">                    invalid = true;</span>
+<span class="fc" id="L1396">                }</span>
+            }
+<span class="fc bfc" id="L1398" title="All 2 branches covered.">            if (invalid) {</span>
+<span class="fc" id="L1399">                System.out.println(&quot;Error: Invalid option entered.\n&quot;);</span>
+<span class="fc" id="L1400">                continue;</span>
+            }
+
+<span class="fc bfc" id="L1403" title="All 2 branches covered.">            if (numOfSeats.size() != 4) {</span>
+<span class="fc" id="L1404">                System.out.println(&quot;Error: Invalid option entered.\n&quot;);</span>
+<span class="fc" id="L1405">                continue;</span>
+            }
+
+<span class="fc bfc" id="L1408" title="All 2 branches covered.">            if (totalSeats &lt;= 0) {</span>
+<span class="fc" id="L1409">                System.out.println(&quot;Error: Invalid option entered.\n&quot;);</span>
+<span class="fc" id="L1410">                continue;</span>
+            }
+<span class="fc bfc" id="L1412" title="All 2 branches covered.">            for(int i = 0;i &lt; valueOfSeats.size();i++){</span>
+<span class="fc" id="L1413">                int ticketValue = numOfSeats.get(i) * valueOfSeats.get(i);</span>
+<span class="fc" id="L1414">                tickets+=ticketValue;</span>
+            }
+<span class="fc" id="L1416">            totalTicketValue = tickets;</span>
+
+<span class="fc" id="L1418">            pickBookingSeat(userInput, movie, timeIdx, totalSeats);</span>
+<span class="fc" id="L1419">            choseNumSeats = true;</span>
+
+<span class="fc" id="L1421">        }</span>
+<span class="fc" id="L1422">    }</span>
+
+    public void pickBookingSeat(Scanner userInput, Movie movie, int timeIdx, int numOfBookingSeats) {
+<span class="fc" id="L1425">        userInput.nextLine();</span>
+<span class="fc" id="L1426">        List&lt;String&gt; times = movie.getUpcomingTimes();</span>
+//        List&lt;Integer&gt; seats = movie.getSeats(timeIdx);
+
+//        Scanner userInput = new Scanner(System.in);
+<span class="fc" id="L1430">        boolean choseSeat = false;</span>
+<span class="fc bfc" id="L1431" title="All 2 branches covered.">        while (!choseSeat) {</span>
+<span class="fc" id="L1432">            System.out.println(&quot;Select the seat you would like:\n&quot; +</span>
+                    &quot;  1. Front\n&quot; +
+                    &quot;  2. Middle\n&quot; +
+                    &quot;  3. Rear\n&quot; +
+                    &quot;  4. Back to home page&quot;);
+
+<span class="fc" id="L1438">            int entered = 0;</span>
+<span class="fc" id="L1439">            long currentTime = System.currentTimeMillis();</span>
+<span class="fc bfc" id="L1440" title="All 2 branches covered.">            if (userInput.hasNextInt()) {</span>
+<span class="fc" id="L1441">                entered = userInput.nextInt();</span>
+<span class="pc bpc" id="L1442" title="1 of 2 branches missed.">                if (System.currentTimeMillis() - currentTime &gt; timeoutTime) {</span>
+<span class="nc" id="L1443">                    userTimeout(movie, movie.getUpcomingTimes().get(timeIdx), null, 0);</span>
+<span class="nc" id="L1444">                    return;</span>
+                }
+            } else {
+<span class="fc" id="L1447">                userInput.nextLine();</span>
+<span class="pc bpc" id="L1448" title="1 of 2 branches missed.">                if (System.currentTimeMillis() - currentTime &gt; timeoutTime) {</span>
+<span class="nc" id="L1449">                    userTimeout(movie, movie.getUpcomingTimes().get(timeIdx), null, 0);</span>
+<span class="nc" id="L1450">                    return;</span>
+                }
+<span class="fc" id="L1452">                System.out.println(&quot;Error: Not a valid option.\n&quot;);</span>
+<span class="fc" id="L1453">                continue;</span>
+            }
+
+<span class="fc bfc" id="L1456" title="All 4 branches covered.">            if (entered &gt; 0 &amp;&amp; entered &lt;= 4) {</span>
+<span class="fc bfc" id="L1457" title="All 2 branches covered.">                if (entered == 4) {</span>
+<span class="fc" id="L1458">                    System.out.println(&quot;Returning back to customer home page.\n&quot;);</span>
+<span class="fc" id="L1459">                    return;</span>
+                }
+
+<span class="fc" id="L1462">                boolean validSeat = movie.setSeats(timeIdx, entered - 1, numOfBookingSeats);</span>
+<span class="fc bfc" id="L1463" title="All 2 branches covered.">                if (!validSeat) {</span>
+<span class="fc" id="L1464">                    continue;</span>
+                }
+                // generate transaction id
+<span class="fc" id="L1467">                int payment = checkPayment(userInput);</span>
+
+<span class="fc" id="L1469">                String[] cinemaSeats = {&quot;Front&quot;, &quot;Middle&quot;, &quot;Rear&quot;};</span>
+
+<span class="fc" id="L1471">                String cancelReason = &quot;&quot;;</span>
+<span class="pc bpc" id="L1472" title="1 of 2 branches missed.">                if (payment == 1) {</span>
+<span class="nc" id="L1473">                    cancelReason = &quot;card payment failed&quot;;</span>
+                }
+<span class="pc bpc" id="L1475" title="1 of 2 branches missed.">                else if (payment == 3) { // TIMEOUT AT PAYMENT</span>
+<span class="nc" id="L1476">                    userTimeout(movie, movie.getUpcomingTimes().get(timeIdx), cinemaSeats[entered - 1], 0);</span>
+<span class="nc" id="L1477">                    return;</span>
+                }
+
+<span class="fc" id="L1480">                Transaction transaction = createTranscation(movie, times.get(timeIdx), cinemaSeats[entered - 1], numOfBookingSeats, cancelReason);</span>
+
+//                Transaction transaction = new Transaction(transactionId, movie, times.get(timeIdx), cinemaSeats[entered - 1], numOfBookingSeats, cancelReason);
+<span class="fc" id="L1483">                transactions.add(transaction);</span>
+
+<span class="pc bpc" id="L1485" title="1 of 2 branches missed.">                if (payment == 1) {</span>
+<span class="nc" id="L1486">                    Date date = new Date(System.currentTimeMillis());</span>
+<span class="nc" id="L1487">                    transaction.setCancelDate(date);</span>
+                }
+<span class="pc bpc" id="L1489" title="1 of 2 branches missed.">                if (payment == 2) {</span>
+<span class="fc" id="L1490">                    currAcc.addTransaction(transaction);</span>
+<span class="fc" id="L1491">                    System.out.println(&quot;----------------------\n&quot; +</span>
+<span class="fc" id="L1492">                            transaction.getTransactionInformation() +</span>
+                            &quot;----------------------\n&quot;);
+                }
+<span class="fc" id="L1495">                choseSeat = true;</span>
+
+<span class="fc" id="L1497">            } else {</span>
+<span class="fc" id="L1498">                System.out.println(&quot;Error: Not a valid option.\n&quot;);</span>
+<span class="fc" id="L1499">                continue;</span>
+            }
+<span class="fc" id="L1501">        }</span>
+<span class="fc" id="L1502">    }</span>
+
+    public Transaction createTranscation(Movie movie, String time, String seat, int numOfSeats, String cancelReason) {
+<span class="fc" id="L1505">        String randIdChars = &quot;abcdefghijklmnopqrstuvwyxz&quot;;</span>
+<span class="fc" id="L1506">        randIdChars += randIdChars.toUpperCase();</span>
+<span class="fc" id="L1507">        randIdChars += &quot;1234567890&quot;;</span>
+<span class="fc" id="L1508">        String transactionId = &quot;&quot;;</span>
+<span class="fc" id="L1509">        boolean unique = false;</span>
+<span class="fc bfc" id="L1510" title="All 2 branches covered.">        while (!unique) {</span>
+<span class="fc" id="L1511">            transactionId = &quot;&quot;;</span>
+<span class="fc" id="L1512">            Random rand = new Random();</span>
+<span class="fc bfc" id="L1513" title="All 2 branches covered.">            for (int i = 0; i &lt; 6; i++){</span>
+<span class="fc" id="L1514">                int num = rand.nextInt(randIdChars.length());</span>
+<span class="fc" id="L1515">                transactionId += randIdChars.charAt(num);</span>
+            }
+
+<span class="fc" id="L1518">            boolean uniqueId = true;</span>
+<span class="pc bpc" id="L1519" title="1 of 2 branches missed.">            for (Transaction transaction : transactions) {</span>
+<span class="nc bnc" id="L1520" title="All 2 branches missed.">                if (transaction.getId().equals(transactionId)) {</span>
+<span class="nc" id="L1521">                    uniqueId = false;</span>
+<span class="nc" id="L1522">                    break;</span>
+                }
+<span class="nc" id="L1524">            }</span>
+<span class="pc bpc" id="L1525" title="1 of 2 branches missed.">            if (!uniqueId) {</span>
+<span class="nc" id="L1526">                continue;</span>
+            }
+<span class="fc" id="L1528">            unique = true;</span>
+<span class="fc" id="L1529">        }</span>
+
+<span class="fc" id="L1531">        return new Transaction(transactionId, movie, time, seat, numOfSeats, cancelReason);</span>
+    }
+
+//    public void setCreditCardFile(String file) {
+//        this.creditCardFile = file;
+//    }
+
+    public int checkPayment(Scanner userInput){
+<span class="fc" id="L1539">        JSONParser parser = new JSONParser();</span>
+<span class="fc" id="L1540">        boolean cardFound = false;</span>
+//        Scanner userInput = new Scanner(System.in);
+//        userInput.nextLine();
+        try {
+<span class="fc" id="L1544">            cards = (JSONArray) parser.parse(new FileReader(this.creditCardFile));</span>
+<span class="nc" id="L1545">        } catch (IOException | ParseException e) {</span>
+<span class="nc" id="L1546">            e.printStackTrace();</span>
+<span class="fc" id="L1547">        }</span>
+
+
+<span class="pc bpc" id="L1550" title="1 of 2 branches missed.">        while(this.checkPaymentVal == 5) {</span>
+<span class="fc" id="L1551">            System.out.println(&quot;Select the payment option you would like\n&quot; +</span>
+                    &quot;  1. Credit Card\n&quot; +
+                    &quot;  2. Gift Card\n&quot; +
+                    &quot;  3. Return to seat selection&quot;);
+
+
+<span class="fc" id="L1557">            long currentTime = System.currentTimeMillis();</span>
+<span class="fc" id="L1558">            int entered = 0;</span>
+<span class="pc bpc" id="L1559" title="1 of 2 branches missed.">            if (userInput.hasNextInt()) {</span>
+<span class="fc" id="L1560">                entered = userInput.nextInt();</span>
+<span class="pc bpc" id="L1561" title="1 of 2 branches missed.">                if (System.currentTimeMillis() - currentTime &gt; timeoutTime) {</span>
+<span class="nc" id="L1562">                    return 3;</span>
+                }
+            } else {
+<span class="nc" id="L1565">                userInput.nextLine();</span>
+<span class="nc bnc" id="L1566" title="All 2 branches missed.">                if (System.currentTimeMillis() - currentTime &gt; timeoutTime) {</span>
+<span class="nc" id="L1567">                    return 3;</span>
+                }
+<span class="nc" id="L1569">                System.out.println(&quot;Error: Not a valid option.\n&quot;);</span>
+<span class="nc" id="L1570">                continue;</span>
+            }
+
+<span class="pc bpc" id="L1573" title="2 of 4 branches missed.">            if (entered &gt; 0 &amp;&amp; entered &lt;= 4) {</span>
+<span class="pc bpc" id="L1574" title="1 of 2 branches missed.">                if (entered == 1) {</span>
+<span class="nc bnc" id="L1575" title="All 2 branches missed.">                    if(currAcc.getHasCard()){</span>
+<span class="nc" id="L1576">                        return 2;</span>
+                    }
+<span class="nc" id="L1578">                    System.out.println(&quot;Please enter the card holders name and number&quot;);</span>
+<span class="nc" id="L1579">                    System.out.print(&quot;Card holders name: &quot;);</span>
+<span class="nc" id="L1580">                    userInput.nextLine();</span>
+<span class="nc" id="L1581">                    currentTime = System.currentTimeMillis();</span>
+<span class="nc" id="L1582">                    String name = userInput.nextLine();</span>
+<span class="nc bnc" id="L1583" title="All 2 branches missed.">                    if (System.currentTimeMillis() - currentTime &gt; timeoutTime) {</span>
+<span class="nc" id="L1584">                        return 3;</span>
+                    }
+
+<span class="nc" id="L1587">                    currentTime = System.currentTimeMillis();</span>
+<span class="nc" id="L1588">                    String number = PasswordMasker.readPassword(&quot;Card number: &quot;);</span>
+<span class="nc bnc" id="L1589" title="All 2 branches missed.">                    if (System.currentTimeMillis() - currentTime &gt; timeoutTime) {</span>
+<span class="nc" id="L1590">                        return 3;</span>
+                    }
+//                    String number = userInput.nextLine();
+//                    System.out.print(&quot;Card number: &quot;);
+
+<span class="nc bnc" id="L1595" title="All 2 branches missed.">                    for (Object n : cards) {</span>
+
+<span class="nc bnc" id="L1597" title="All 4 branches missed.">                        if (((JSONObject) n).get(&quot;name&quot;).equals(name) &amp;&amp; ((JSONObject) n).get(&quot;number&quot;).equals(number)){</span>
+<span class="nc" id="L1598">                            System.out.println(&quot;Transaction was successful&quot;);</span>
+<span class="nc" id="L1599">                            currAcc.setHasCard(true);</span>
+<span class="nc" id="L1600">                            cardFound = true;</span>
+<span class="nc" id="L1601">                            return 2;</span>
+                        }
+
+<span class="nc" id="L1604">                    }</span>
+<span class="nc bnc" id="L1605" title="All 2 branches missed.">                    if (cardFound == false){</span>
+<span class="nc" id="L1606">                        System.out.println(&quot;Card details were incorrect, transaction was unsuccessful&quot;);</span>
+<span class="nc" id="L1607">                        return 1;</span>
+                    }
+
+
+<span class="nc" id="L1611">                }</span>
+<span class="pc bpc" id="L1612" title="1 of 2 branches missed.">                else if (entered == 2){</span>
+<span class="fc" id="L1613">                    System.out.println(&quot;Please enter the 16 digit gift card number followed by 'GC'&quot;);</span>
+<span class="fc" id="L1614">                    System.out.print(&quot;Card number: &quot;);</span>
+<span class="fc" id="L1615">                    userInput.nextLine();</span>
+<span class="fc" id="L1616">                    currentTime = System.currentTimeMillis();</span>
+<span class="fc" id="L1617">                    String cardNo = userInput.nextLine();</span>
+<span class="pc bpc" id="L1618" title="1 of 2 branches missed.">                    if (System.currentTimeMillis() - currentTime &gt; timeoutTime) {</span>
+<span class="nc" id="L1619">                        return 3;</span>
+                    }
+
+<span class="pc bpc" id="L1622" title="1 of 2 branches missed.">                    for (GiftCard c : this.giftCards){</span>
+
+<span class="fc bfc" id="L1624" title="All 2 branches covered.">                        if(cardNo.equals(c.getNumber())){</span>
+<span class="pc bpc" id="L1625" title="1 of 2 branches missed.">                            if(c.getValue() == 0){</span>
+<span class="nc" id="L1626">                                System.out.println(&quot;\nGift card has no value left, try again.\n&quot;);</span>
+<span class="nc" id="L1627">                                cardFound = true;</span>
+<span class="nc" id="L1628">                                continue;</span>
+                            }
+<span class="pc bpc" id="L1630" title="1 of 2 branches missed.">                            if((c.getValue() - totalTicketValue) &lt; 0){</span>
+<span class="nc" id="L1631">                                System.out.println(&quot;\nGift card has insufficient funds, try again.&quot;);</span>
+<span class="nc" id="L1632">                                System.out.printf(&quot;Gift card value: $%d\n&quot;, c.getValue());</span>
+<span class="nc" id="L1633">                                cardFound = true;</span>
+<span class="nc" id="L1634">                                continue;</span>
+
+                            }
+<span class="fc" id="L1637">                            System.out.println(&quot;\nCongratulations gift card has successfully been redeemed!&quot;);</span>
+<span class="fc" id="L1638">                            c.setValue(c.getValue() - totalTicketValue);</span>
+<span class="fc" id="L1639">                            System.out.printf(&quot;Remaning Gift Card Balance: %d\n&quot;, c.getValue());</span>
+
+<span class="fc" id="L1641">                            cardFound = true;</span>
+<span class="fc" id="L1642">                            updateGiftCardStateCSV();</span>
+<span class="fc" id="L1643">                            return 2;</span>
+                        }
+<span class="fc" id="L1645">                    }</span>
+<span class="nc bnc" id="L1646" title="All 2 branches missed.">                    if (cardFound == false){</span>
+<span class="nc" id="L1647">                        System.out.println(&quot;Card details were incorrect, transaction was unsuccessful&quot;);</span>
+<span class="nc" id="L1648">                        return 1;</span>
+                    }
+
+<span class="nc" id="L1651">                }</span>
+<span class="nc bnc" id="L1652" title="All 2 branches missed.">                else if (entered == 3) {</span>
+<span class="nc" id="L1653">                    System.out.println(&quot;Returning back to customer home page.\n&quot;);</span>
+<span class="nc" id="L1654">                    return 0;</span>
+                }
+            }
+
+
+
+<span class="nc" id="L1660">        }</span>
+<span class="nc" id="L1661">        return 0;</span>
+    }
+
+    public void cancelBooking(Scanner userInput) {
+//        Scanner userInput = new Scanner(System.in);
+<span class="fc" id="L1666">        boolean cancelledBooking = false;</span>
+<span class="fc bfc" id="L1667" title="All 2 branches covered.">        while (!cancelledBooking) {</span>
+<span class="fc" id="L1668">            System.out.println(&quot;Select the booking you would like to cancel:&quot;);</span>
+<span class="fc bfc" id="L1669" title="All 2 branches covered.">            for (int i = 0; i &lt; currAcc.getTransactions().size(); i++) {</span>
+<span class="fc" id="L1670">                Transaction transaction = currAcc.getTransactions().get(i);</span>
+<span class="fc" id="L1671">                System.out.println((i + 1) + &quot;.&quot;);</span>
+<span class="fc" id="L1672">                System.out.println(transaction.getTransactionInformation());</span>
+            }
+<span class="fc" id="L1674">            System.out.println((currAcc.getTransactions().size() + 1) + &quot;. Back to home page&quot;);</span>
+
+<span class="fc" id="L1676">            int entered = 0;</span>
+<span class="fc bfc" id="L1677" title="All 2 branches covered.">            if (userInput.hasNextInt()) {</span>
+<span class="fc" id="L1678">                entered = userInput.nextInt();</span>
+            } else {
+<span class="fc" id="L1680">                System.out.println(&quot;Error: Not a valid option.\n&quot;);</span>
+<span class="fc" id="L1681">                userInput.nextLine();</span>
+<span class="fc" id="L1682">                continue;</span>
+            }
+
+<span class="fc bfc" id="L1685" title="All 4 branches covered.">            if (entered &gt; 0 &amp;&amp; entered &lt;= currAcc.getTransactions().size() + 1) {</span>
+<span class="fc bfc" id="L1686" title="All 2 branches covered.">                if (entered == currAcc.getTransactions().size() + 1) {</span>
+<span class="fc" id="L1687">                    System.out.println(&quot;Returning back to customer home page.\n&quot;);</span>
+<span class="fc" id="L1688">                    return;</span>
+                }
+
+<span class="fc" id="L1691">                Transaction transaction = currAcc.getTransactions().get(entered - 1);</span>
+<span class="fc" id="L1692">                currAcc.removeTransaction(entered - 1);</span>
+
+<span class="fc" id="L1694">                List&lt;String&gt; cinemaSeats = Arrays.asList(&quot;Front&quot;, &quot;Middle&quot;, &quot;Rear&quot;);</span>
+<span class="fc" id="L1695">                int seat = cinemaSeats.indexOf(transaction.getSeat());</span>
+<span class="fc" id="L1696">                transaction.setCancelReason(&quot;user cancelled&quot;);</span>
+
+<span class="fc" id="L1698">                Date date = new Date(System.currentTimeMillis());</span>
+<span class="fc" id="L1699">                transaction.setCancelDate(date);</span>
+
+<span class="fc" id="L1701">                transaction.getMovie().addSeats(transaction.getMovieTime(), seat, transaction.getNumOfSeats());</span>
+<span class="fc" id="L1702">                System.out.println(&quot;Booking removed.\n&quot;);</span>
+<span class="fc" id="L1703">                cancelledBooking = true;</span>
+
+<span class="fc" id="L1705">            } else {</span>
+<span class="fc" id="L1706">                System.out.println(&quot;Error: Not a valid option.\n&quot;);</span>
+<span class="fc" id="L1707">                continue;</span>
+            }
+
+<span class="fc" id="L1710">        }</span>
+
+
+<span class="fc" id="L1713">    }</span>
+
+    public void staffLoginLogic(Scanner userInput) throws FileNotFoundException{
+<span class="fc" id="L1716">        userInput.nextLine();</span>
+//        Scanner userInput = new Scanner(System.in);
+<span class="fc bfc" id="L1718" title="All 2 branches covered.">        while(loggedIn){</span>
+<span class="fc" id="L1719">            System.out.println(&quot;Select the page you would like to visit:\n&quot; +</span>
+                    &quot;  1. Movie report\n&quot; +
+                    &quot;  2. Booking Summaries\n&quot; +
+                    &quot;  3. Movie Management\n&quot; +
+                    &quot;  4. Add New Shows for Next Week\n&quot; +
+                    &quot;  5. Giftcard Management\n&quot; +
+                    &quot;  6. Logout&quot;);
+
+<span class="fc" id="L1727">            int logged = 0;</span>
+<span class="pc bpc" id="L1728" title="1 of 2 branches missed.">            if (userInput.hasNextInt()) {</span>
+<span class="fc" id="L1729">                logged = userInput.nextInt();</span>
+            }
+<span class="pc bpc" id="L1731" title="1 of 2 branches missed.">            if(logged == 1){</span>
+<span class="nc" id="L1732">                displayMovies();</span>
+<span class="nc" id="L1733">                System.out.println(&quot;\nThe Movie Report can also be found in src/main/resource/movies.csv for a file format.&quot;);</span>
+            }
+
+<span class="fc bfc" id="L1736" title="All 2 branches covered.">            else if (logged == 2) {</span>
+<span class="fc" id="L1737">                bookingSummaries();</span>
+<span class="fc" id="L1738">                System.out.println(&quot;\nThe summary of today's bookings can be found in src/main/resources/bookings.txt&quot;);</span>
+            }
+
+<span class="pc bpc" id="L1741" title="1 of 2 branches missed.">            else if (logged == 4){</span>
+<span class="nc" id="L1742">                addNewShows();</span>
+//                break;
+            }
+<span class="pc bpc" id="L1745" title="1 of 2 branches missed.">            else if (logged == 3) {</span>
+<span class="nc" id="L1746">                editingMovies();</span>
+            }
+<span class="pc bpc" id="L1748" title="1 of 2 branches missed.">            else if (logged == 5) {</span>
+<span class="nc" id="L1749">                giftCardManage(userInput);</span>
+            }
+<span class="fc bfc" id="L1751" title="All 2 branches covered.">            else if (logged == 6) {</span>
+<span class="fc" id="L1752">                this.loggedIn = false;</span>
+<span class="fc" id="L1753">                System.out.println(&quot;You have logged out&quot;);</span>
+            }
+            else {
+<span class="fc" id="L1756">                System.out.println(&quot;Error: Not a valid option.&quot;);</span>
+<span class="fc" id="L1757">                userInput.nextLine();</span>
+            }
+
+<span class="fc" id="L1760">        }</span>
+//        userInput.close();
+<span class="fc" id="L1762">    }</span>
+
+    public void updateGiftCardStateCSV(){
+//        card.setValue(1);
+<span class="fc" id="L1766">        List&lt;List&lt;String&gt;&gt; cardsDetails = new ArrayList&lt;&gt;();</span>
+
+<span class="fc bfc" id="L1768" title="All 2 branches covered.">        for (GiftCard c : this.giftCards){</span>
+<span class="fc" id="L1769">            List&lt;String&gt; gc = new ArrayList&lt;&gt;(2);</span>
+<span class="fc bfc" id="L1770" title="All 2 branches covered.">            for(int i = 0; i &lt; 2;i++){</span>
+<span class="fc" id="L1771">                gc.add(&quot;&quot;);</span>
+            }
+<span class="fc" id="L1773">            String cardNum = c.getNumber();</span>
+<span class="fc" id="L1774">            String cardValue = String.valueOf(c.getValue());</span>
+
+<span class="fc" id="L1776">            gc.set(0,cardNum);</span>
+<span class="fc" id="L1777">            gc.set(1,cardValue);</span>
+
+<span class="fc" id="L1779">            cardsDetails.add(gc);</span>
+<span class="fc" id="L1780">        }</span>
+        try {
+<span class="fc" id="L1782">            FileWriter csvWriter = new FileWriter(this.giftCardFile);</span>
+            // Write all the details of the cards into the .csv file, having each card as a new entry on a new line
+<span class="fc bfc" id="L1784" title="All 2 branches covered.">            for (List&lt;String&gt; c : cardsDetails) {</span>
+<span class="fc" id="L1785">                csvWriter.append(String.join(&quot;,&quot;, c));  // Combine all elements in the list and separate by a comma</span>
+<span class="fc" id="L1786">                csvWriter.append(&quot;\n&quot;);</span>
+<span class="fc" id="L1787">            }</span>
+
+<span class="fc" id="L1789">            csvWriter.flush();</span>
+<span class="fc" id="L1790">            csvWriter.close();</span>
+        }
+<span class="nc" id="L1792">        catch (IOException e) {</span>
+<span class="nc" id="L1793">            System.out.println(&quot;Error: Couldn't update the database&quot;);</span>
+<span class="fc" id="L1794">        }</span>
+
+
+
+<span class="fc" id="L1798">    }</span>
+
+    public void giftCardDelete(String GCNumber) {
+<span class="fc" id="L1801">        String[] data = new String[99];</span>
+<span class="fc" id="L1802">        int count = 0;</span>
+<span class="fc" id="L1803">        int rowCount = 0;</span>
+<span class="fc" id="L1804">        GiftCard removedCard = null;</span>
+        try {
+<span class="fc" id="L1806">            BufferedReader csvReader = new BufferedReader(new FileReader(this.giftCardFile));</span>
+            String row;
+
+<span class="fc bfc" id="L1809" title="All 2 branches covered.">            while ((row = csvReader.readLine()) != null) {</span>
+<span class="pc bpc" id="L1810" title="1 of 2 branches missed.">                if(row.split(&quot;,&quot;)[0].equals(GCNumber)){</span>
+<span class="nc" id="L1811">                    count++;</span>
+<span class="nc bnc" id="L1812" title="All 2 branches missed.">                    for(GiftCard c : this.giftCards) {</span>
+<span class="nc bnc" id="L1813" title="All 2 branches missed.">                        if(c.getNumber().equals(GCNumber)){</span>
+<span class="nc" id="L1814">                            removedCard = c;</span>
+                        }
+<span class="nc" id="L1816">                    }</span>
+<span class="nc" id="L1817">                    this.giftCards.remove(removedCard);</span>
+<span class="nc" id="L1818">                    continue;</span>
+                }
+
+<span class="fc" id="L1821">                data[rowCount] = row;</span>
+<span class="fc" id="L1822">                rowCount++;</span>
+<span class="fc" id="L1823">                count++;</span>
+
+
+            }
+<span class="nc" id="L1827">        }catch(IOException e){</span>
+
+<span class="fc" id="L1829">        }</span>
+        try {
+<span class="fc" id="L1831">            FileWriter csvWriter = new FileWriter(this.giftCardFile, false);</span>
+<span class="fc" id="L1832">            BufferedWriter bw = new BufferedWriter(csvWriter);</span>
+<span class="fc bfc" id="L1833" title="All 2 branches covered.">            for (int j = 0; j &lt; rowCount; j++) {</span>
+<span class="fc" id="L1834">                bw.append(String.valueOf(data[j]));</span>
+<span class="fc" id="L1835">                bw.append(&quot;\n&quot;);</span>
+            }
+<span class="fc" id="L1837">            bw.close();</span>
+<span class="fc" id="L1838">            System.out.println(&quot;\nYou have successfully updated the gift card database.&quot;);</span>
+
+<span class="nc" id="L1840">        }catch(IOException e){</span>
+
+<span class="fc" id="L1842">        }</span>
+<span class="fc" id="L1843">    }</span>
+
+    public void giftCardView() {
+//        try {
+//            BufferedReader csvReader = new BufferedReader(new FileReader(this.giftCardFile));
+//            String row;
+<span class="fc" id="L1849">        System.out.println(&quot;Current gift cards:\n&quot;);</span>
+//            while ((row = csvReader.readLine()) != null) {
+//                    System.out.println(row+&quot;\n&quot;);
+//                }
+//            }
+//        catch(IOException e){
+//
+//        }
+<span class="fc bfc" id="L1857" title="All 2 branches covered.">        for(GiftCard c : this.giftCards){</span>
+<span class="fc" id="L1858">            System.out.println(c.getGCInfo());</span>
+<span class="fc" id="L1859">        }</span>
+
+<span class="fc" id="L1861">    }</span>
+    public void giftCardManage(Scanner userInput){
+//        Scanner userInput = new Scanner(System.in);
+<span class="fc" id="L1864">        userInput.nextLine();</span>
+<span class="fc" id="L1865">        String code = null;</span>
+<span class="fc" id="L1866">        boolean cont = true;</span>
+
+
+<span class="fc bfc" id="L1869" title="All 2 branches covered.">        while (cont) {</span>
+<span class="fc" id="L1870">            System.out.println(&quot;Would you like to add/delete or view gift cards?\n&quot; +</span>
+                    &quot;  1. Add\n&quot; +
+                    &quot;  2. Delete\n&quot; +
+                    &quot;  3. View\n&quot; +
+                    &quot;  4. Exit&quot;);
+<span class="fc" id="L1875">            int logged = 0;</span>
+<span class="fc bfc" id="L1876" title="All 2 branches covered.">            if (userInput.hasNextInt()) {</span>
+<span class="fc" id="L1877">                logged = userInput.nextInt();</span>
+            }
+<span class="fc bfc" id="L1879" title="All 5 branches covered.">            switch (logged) {</span>
+<span class="fc" id="L1880">                case 1: giftCardCreate(userInput);</span>
+<span class="fc" id="L1881">                    break;</span>
+<span class="fc" id="L1882">                case 2: System.out.println(&quot;Please input the gift card code to delete.&quot;);</span>
+<span class="fc" id="L1883">                    Scanner newInput = new Scanner(System.in);</span>
+<span class="pc bpc" id="L1884" title="1 of 2 branches missed.">                    if (newInput.hasNextLine()) {</span>
+<span class="nc" id="L1885">                        code = newInput.nextLine();</span>
+                    }
+<span class="fc" id="L1887">                    giftCardDelete(code);</span>
+<span class="fc" id="L1888">                    break;</span>
+<span class="fc" id="L1889">                case 3: giftCardView();</span>
+<span class="fc" id="L1890">                    break;</span>
+
+<span class="fc" id="L1892">                case 4: cont = false;</span>
+<span class="fc" id="L1893">                    break;</span>
+
+
+<span class="fc" id="L1896">                default: System.out.println(&quot;Error: Not a valid option.&quot;);</span>
+<span class="fc" id="L1897">                    userInput.nextLine();</span>
+
+            }
+
+<span class="fc" id="L1901">        }</span>
+
+<span class="fc" id="L1903">    }</span>
+
+    public void giftCardCreate(Scanner userInput) {
+<span class="fc" id="L1906">        boolean correct = false;</span>
+        String number;
+<span class="fc" id="L1908">        int value = 0;</span>
+<span class="fc" id="L1909">        userInput.nextLine();</span>
+
+        while (true) { // The while loop ensures continual prompt in the case bad input is given
+<span class="fc" id="L1912">            System.out.println(&quot;Please create a new gift card by entering the code.&quot;);</span>
+<span class="fc" id="L1913">            System.out.print(&quot;Code: &quot;);</span>
+<span class="fc" id="L1914">            number = userInput.nextLine();</span>
+            try {
+<span class="fc" id="L1916">                BufferedReader giftCardReader = new BufferedReader(new FileReader(this.giftCardFile));</span>
+                String line;
+<span class="fc" id="L1918">                boolean unique = true;</span>
+<span class="fc bfc" id="L1919" title="All 2 branches covered.">                while ((line = giftCardReader.readLine()) != null) {</span>
+<span class="fc" id="L1920">                    String[] ls = line.split(&quot;,&quot;);</span>
+<span class="fc bfc" id="L1921" title="All 2 branches covered.">                    if (ls[0].equals(number)) {</span>
+<span class="fc" id="L1922">                        System.out.println(&quot;\nThis gift card has already been created. Please try again.\n&quot;);</span>
+<span class="fc" id="L1923">                        unique = false;</span>
+<span class="fc" id="L1924">                        break;</span>
+<span class="fc bfc" id="L1925" title="All 2 branches covered.">                    } else if (number.matches(&quot;.*\\s.*&quot;)) {</span>
+<span class="fc" id="L1926">                        System.out.println(&quot;\nGift card code cannot contain spaces. Please try again.\n&quot;);</span>
+<span class="fc" id="L1927">                        unique = false;</span>
+<span class="fc" id="L1928">                        break;</span>
+<span class="fc bfc" id="L1929" title="All 2 branches covered.">                    } else if (number.length() != 18){</span>
+<span class="fc" id="L1930">                        System.out.println(&quot;\nGift card code has to be a 16 digit number followed by 'GC' suffix. Please try again.\n&quot;);</span>
+<span class="fc" id="L1931">                        unique = false;</span>
+<span class="fc" id="L1932">                        break;</span>
+<span class="pc bpc" id="L1933" title="1 of 2 branches missed.">                    } else if (number.length() == 0) {</span>
+<span class="nc" id="L1934">                        System.out.println(&quot;\nGift card code cannot be empty. Please try again.\n&quot;);</span>
+<span class="nc" id="L1935">                        unique = false;</span>
+<span class="nc" id="L1936">                        break;</span>
+<span class="pc bpc" id="L1937" title="1 of 2 branches missed.">                    } else if (number.length() == 18){</span>
+<span class="fc bfc" id="L1938" title="All 2 branches covered.">                        for(int count = 0; count &lt; 15; count++){</span>
+<span class="pc bpc" id="L1939" title="1 of 2 branches missed.">                            if(Character.isDigit(number.charAt(count)) == true){</span>
+<span class="fc" id="L1940">                                correct = true;</span>
+                            } else {
+<span class="nc" id="L1942">                                correct = false;</span>
+<span class="nc" id="L1943">                                unique = false;</span>
+<span class="nc" id="L1944">                                break;</span>
+                            }
+
+                        }
+<span class="pc bpc" id="L1948" title="1 of 2 branches missed.">                        if(correct == true){</span>
+<span class="fc bfc" id="L1949" title="All 2 branches covered.">                            if(number.charAt(16) == 'G'){</span>
+<span class="fc bfc" id="L1950" title="All 2 branches covered.">                                if(number.charAt(17) == 'C'){</span>
+<span class="fc" id="L1951">                                    correct = true;</span>
+                                } else{
+<span class="fc" id="L1953">                                    System.out.println(&quot;\nGift card code has to be a 16 digit number followed by 'GC' suffix. Please try again.\n&quot;);</span>
+<span class="fc" id="L1954">                                    correct = false;</span>
+<span class="fc" id="L1955">                                    unique = false;</span>
+<span class="fc" id="L1956">                                    break;</span>
+                                }
+                            } else{
+<span class="fc" id="L1959">                                System.out.println(&quot;\nGift card code has to be a 16 digit number followed by 'GC' suffix. Please try again.\n&quot;);</span>
+<span class="fc" id="L1960">                                correct = false;</span>
+<span class="fc" id="L1961">                                unique = false;</span>
+<span class="fc" id="L1962">                                break;</span>
+                            }
+                        }
+                    }
+<span class="fc" id="L1966">                }</span>
+
+
+<span class="fc bfc" id="L1969" title="All 2 branches covered.">                if (!unique) {</span>
+<span class="fc" id="L1970">                    continue;</span>
+                }
+<span class="fc" id="L1972">                System.out.print(&quot;Enter amount to be added to giftcard: &quot;);</span>
+<span class="fc" id="L1973">                value = userInput.nextInt();</span>
+
+<span class="fc" id="L1975">                break;</span>
+<span class="nc" id="L1976">            } catch (IOException e) {</span>
+<span class="nc" id="L1977">                System.out.println(&quot;Error: couldn't update giftcards.csv&quot;);</span>
+<span class="nc" id="L1978">                break;</span>
+            }
+
+        }
+        try {
+<span class="fc" id="L1983">            FileWriter csvWriter = new FileWriter(this.giftCardFile, true);</span>
+<span class="fc" id="L1984">            BufferedWriter bw = new BufferedWriter(csvWriter);</span>
+<span class="fc" id="L1985">            bw.write(String.format(&quot;%s,%s\n&quot;, number, value));</span>
+<span class="fc" id="L1986">            bw.close();</span>
+<span class="fc" id="L1987">            System.out.println(&quot;\nYou have successfully created a new gift card.&quot;);</span>
+<span class="nc" id="L1988">        } catch (IOException e) {</span>
+<span class="nc" id="L1989">            System.out.println(&quot;Error: couldn't update giftcards.csv&quot;);</span>
+<span class="fc" id="L1990">        }</span>
+
+<span class="fc" id="L1992">        GiftCard newCard = createNewGiftCard(number, value);</span>
+<span class="fc" id="L1993">        this.giftCards.add(newCard);</span>
+<span class="fc" id="L1994">    }</span>
+
+    public GiftCard createNewGiftCard(String number, int value){
+<span class="fc" id="L1997">        return new GiftCard(number, value);</span>
+    }
+
+    public void staffHire(int runVersion){
+        String username;
+        String password;
+        String againPassword;
+        while (true) { // The while loop ensures continual prompt in the case passwords do not match
+<span class="fc" id="L2005">            System.out.println(&quot;Please enter a username and password for the new staff.&quot;);</span>
+<span class="fc" id="L2006">            System.out.print(&quot;Username: &quot;);</span>
+<span class="fc" id="L2007">            Scanner name = new Scanner(System.in);</span>
+<span class="fc" id="L2008">            username = name.nextLine();</span>
+<span class="pc bpc" id="L2009" title="1 of 2 branches missed.">            if(runVersion == 1){</span>
+<span class="fc" id="L2010">                System.out.println(&quot;Password: &quot;);</span>
+<span class="fc" id="L2011">                password = name.nextLine();</span>
+<span class="fc" id="L2012">                System.out.println(&quot;Confirm password: &quot;);</span>
+<span class="fc" id="L2013">                againPassword = name.nextLine();</span>
+            } else {
+<span class="nc" id="L2015">                password = PasswordMasker.readPassword(&quot;Password: &quot;);</span>
+<span class="nc" id="L2016">                againPassword = PasswordMasker.readPassword(&quot;Confirm password: &quot;);</span>
+            }
+
+            try {
+<span class="fc" id="L2020">                BufferedReader customersReader = new BufferedReader(new FileReader(this.accountsFile));</span>
+                String line;
+<span class="fc" id="L2022">                boolean unique = true;</span>
+<span class="fc bfc" id="L2023" title="All 2 branches covered.">                while ((line = customersReader.readLine()) != null) {</span>
+<span class="fc" id="L2024">                    String[] ls = line.split(&quot;,&quot;);</span>
+<span class="pc bpc" id="L2025" title="1 of 2 branches missed.">                    if (ls[0].equals(username)) {</span>
+<span class="nc" id="L2026">                        System.out.println(&quot;\nThis username is already taken. Please try again.\n&quot;);</span>
+<span class="nc" id="L2027">                        unique = false;</span>
+<span class="nc" id="L2028">                        break;</span>
+                    }
+<span class="pc bpc" id="L2030" title="1 of 2 branches missed.">                    else if (username.matches(&quot;.*\\s.*&quot;)) {</span>
+<span class="nc" id="L2031">                        System.out.println(&quot;\nUsername cannot contain spaces. Please try again.\n&quot;);</span>
+<span class="nc" id="L2032">                        unique = false;</span>
+<span class="nc" id="L2033">                        break;</span>
+                    }
+<span class="pc bpc" id="L2035" title="1 of 2 branches missed.">                    else if (username.length() == 0) {</span>
+<span class="nc" id="L2036">                        System.out.println(&quot;\nUsername cannot be empty. Please try again.\n&quot;);</span>
+<span class="nc" id="L2037">                        unique = false;</span>
+<span class="nc" id="L2038">                        break;</span>
+                    }
+<span class="fc" id="L2040">                }</span>
+<span class="pc bpc" id="L2041" title="1 of 2 branches missed.">                if (!unique) {</span>
+<span class="nc" id="L2042">                    continue;</span>
+                }
+<span class="nc" id="L2044">            } catch (IOException e) {</span>
+<span class="nc" id="L2045">                System.out.println(&quot;Error: couldn't update accounts.csv&quot;);</span>
+<span class="nc" id="L2046">                break;</span>
+<span class="fc" id="L2047">            }</span>
+
+<span class="pc bpc" id="L2049" title="1 of 2 branches missed.">            if (!password.equals(againPassword)) {</span>
+<span class="nc" id="L2050">                System.out.println(&quot;\nPasswords do not match. Please try again.\n&quot;);</span>
+<span class="nc" id="L2051">                continue;</span>
+<span class="pc bpc" id="L2052" title="1 of 2 branches missed.">            } else if (password.matches(&quot;.*\\s.*&quot;)) {</span>
+<span class="nc" id="L2053">                System.out.println(&quot;\nPassword cannot contain spaces. Please try again.\n&quot;);</span>
+<span class="nc" id="L2054">                continue;</span>
+            }
+<span class="pc bpc" id="L2056" title="1 of 2 branches missed.">            else if (password.length() == 0) {</span>
+<span class="nc" id="L2057">                System.out.println(&quot;\nPassword cannot be empty. Please try again.\n&quot;);</span>
+<span class="nc" id="L2058">                continue;</span>
+            }
+            else {
+                break;
+            }
+        }
+
+        // Opens the local customer database to store customer's details
+        try {
+<span class="fc" id="L2067">            FileWriter csvWriter = new FileWriter(this.accountsFile, true);</span>
+<span class="fc" id="L2068">            BufferedWriter bw = new BufferedWriter(csvWriter);</span>
+<span class="fc" id="L2069">            bw.write(String.format(&quot;%s,%s,%s\n&quot;, username, password, &quot;1&quot;));</span>
+<span class="fc" id="L2070">            bw.close();</span>
+<span class="fc" id="L2071">            System.out.println(&quot;\nYou have successfully hired a new staff member to Fancy Cinemas!&quot;);</span>
+<span class="fc" id="L2072">            System.out.println(&quot;You will return to the staff management menu.\n&quot;);</span>
+        }
+<span class="nc" id="L2074">        catch (IOException e) {</span>
+<span class="nc" id="L2075">            System.out.println(&quot;Error: couldn't update accounts.csv&quot;);</span>
+<span class="fc" id="L2076">        }</span>
+
+<span class="fc" id="L2078">        Account acc = createNewAccount(username, password,0);</span>
+<span class="fc" id="L2079">        this.accounts.add(acc);</span>
+
+<span class="fc" id="L2081">    }</span>
+    public void staffFire(String userName){
+<span class="fc" id="L2083">        String[] data = new String[99];</span>
+<span class="fc" id="L2084">        int count = 0;</span>
+<span class="fc" id="L2085">        int rowCount = 0;</span>
+        try {
+<span class="fc" id="L2087">            BufferedReader csvReader = new BufferedReader(new FileReader(this.accountsFile));</span>
+            String row;
+<span class="fc bfc" id="L2089" title="All 2 branches covered.">            while ((row = csvReader.readLine()) != null) {</span>
+<span class="fc bfc" id="L2090" title="All 2 branches covered.">                if(row.split(&quot;,&quot;)[0].equals(userName)){</span>
+<span class="fc" id="L2091">                    count++;</span>
+<span class="fc" id="L2092">                    continue;</span>
+                }
+
+<span class="fc" id="L2095">                data[rowCount] = row;</span>
+<span class="fc" id="L2096">                rowCount++;</span>
+<span class="fc" id="L2097">                count++;</span>
+            }
+<span class="nc" id="L2099">        }catch(IOException e){</span>
+
+<span class="fc" id="L2101">        }</span>
+        try {
+<span class="fc" id="L2103">            FileWriter csvWriter = new FileWriter(this.accountsFile, false);</span>
+<span class="fc" id="L2104">            BufferedWriter bw = new BufferedWriter(csvWriter);</span>
+<span class="fc bfc" id="L2105" title="All 2 branches covered.">            for (int j = 0; j &lt; rowCount; j++) {</span>
+<span class="fc" id="L2106">                bw.append(String.valueOf(data[j]));</span>
+<span class="fc" id="L2107">                bw.append(&quot;\n&quot;);</span>
+            }
+<span class="fc" id="L2109">            bw.close();</span>
+<span class="fc" id="L2110">            System.out.println(&quot;\nYou have successfully removed that staff member.&quot;);</span>
+
+<span class="nc" id="L2112">        }catch(IOException e){</span>
+
+<span class="fc" id="L2114">        }</span>
+
+<span class="fc" id="L2116">    }</span>
+
+    public void staffView(){
+        try {
+<span class="fc" id="L2120">            BufferedReader csvReader = new BufferedReader(new FileReader(this.accountsFile));</span>
+            String row;
+<span class="fc" id="L2122">            System.out.println(&quot;Current staff members:\n&quot;);</span>
+<span class="fc bfc" id="L2123" title="All 2 branches covered.">            while ((row = csvReader.readLine()) != null) {</span>
+<span class="fc bfc" id="L2124" title="All 2 branches covered.">                if(row.split(&quot;,&quot;)[2].equals(&quot;1&quot;)) {</span>
+<span class="fc" id="L2125">                    System.out.println(row.split(&quot;,&quot;)[0] + &quot;\n&quot;);</span>
+                }
+            }
+        }
+<span class="nc" id="L2129">        catch(IOException e){</span>
+
+<span class="fc" id="L2131">        }</span>
+<span class="fc" id="L2132">    }</span>
+
+    public void staffManage(int runVersion){
+<span class="fc" id="L2135">        Scanner userInput = new Scanner(System.in);</span>
+<span class="fc" id="L2136">        String code = null;</span>
+<span class="fc" id="L2137">        boolean cont = true;</span>
+
+<span class="pc bpc" id="L2139" title="1 of 2 branches missed.">        while (cont) {</span>
+<span class="fc" id="L2140">            System.out.println(&quot;Would you like to hire/fire a staff member?\n&quot; +</span>
+                    &quot;  1. Hire\n&quot; +
+                    &quot;  2. Fire\n&quot; +
+                    &quot;  3. View\n&quot; +
+                    &quot;  4. Exit&quot;);
+<span class="fc" id="L2145">            int choice = 0;</span>
+<span class="pc bpc" id="L2146" title="1 of 2 branches missed.">            if (userInput.hasNextInt()) {</span>
+<span class="fc" id="L2147">                choice = userInput.nextInt();</span>
+            }
+<span class="pc bpc" id="L2149" title="1 of 2 branches missed.">            if(choice == 1) {</span>
+<span class="nc" id="L2150">                staffHire(runVersion);</span>
+<span class="nc" id="L2151">                break;</span>
+<span class="fc bfc" id="L2152" title="All 2 branches covered.">            } else if (choice == 2) {</span>
+<span class="fc" id="L2153">                System.out.println(&quot;Please input the staff username to remove:&quot;);</span>
+<span class="fc" id="L2154">                Scanner newInput = new Scanner(System.in);</span>
+<span class="pc bpc" id="L2155" title="1 of 2 branches missed.">                if (newInput.hasNextLine()) {</span>
+<span class="nc" id="L2156">                    code = newInput.nextLine();</span>
+                }
+<span class="fc" id="L2158">                staffFire(code);</span>
+<span class="fc" id="L2159">                break;</span>
+<span class="fc bfc" id="L2160" title="All 2 branches covered.">            } else if (choice == 3) {</span>
+<span class="fc" id="L2161">                staffView();</span>
+<span class="fc" id="L2162">                break;</span>
+<span class="pc bpc" id="L2163" title="1 of 2 branches missed.">            } else if (choice == 4) {</span>
+<span class="nc" id="L2164">                cont = false;</span>
+<span class="nc" id="L2165">                break;</span>
+            } else{
+<span class="fc" id="L2167">                System.out.println(&quot;Error: Not a valid option.&quot;);</span>
+<span class="fc" id="L2168">                userInput.nextLine();</span>
+            }
+
+<span class="fc" id="L2171">        }</span>
+
+
+<span class="fc" id="L2174">    }</span>
+
+    public void managerLoginLogic() throws FileNotFoundException{
+<span class="fc" id="L2177">        Scanner userInput = new Scanner(System.in);</span>
+<span class="fc bfc" id="L2178" title="All 2 branches covered.">        while(loggedIn){</span>
+<span class="fc" id="L2179">            System.out.println(&quot;Select the page you would like to visit:\n&quot; +</span>
+                    &quot;  1. Movie report\n&quot; +
+                    &quot;  2. Movie Management\n&quot; +
+                    &quot;  3. Add New Shows for Next Week\n&quot; +
+                    &quot;  4. Gift Card Management\n&quot; +
+                    &quot;  5. Staff management\n&quot; +
+                    &quot;  6. Transaction management\n&quot; +
+                    &quot;  7. Logout&quot;);
+
+<span class="fc" id="L2188">            int logged = 0;</span>
+<span class="pc bpc" id="L2189" title="1 of 2 branches missed.">            if (userInput.hasNextInt()) {</span>
+<span class="fc" id="L2190">                logged = userInput.nextInt();</span>
+            }
+<span class="pc bpc" id="L2192" title="6 of 8 branches missed.">            switch (logged) {</span>
+<span class="nc" id="L2193">                case 1: displayMovies();</span>
+<span class="nc" id="L2194">                        System.out.println(&quot;\nThe Movie Report can also be found in src/main/resource/movies.csv for a file format.&quot;);</span>
+<span class="nc" id="L2195">                        break;</span>
+<span class="nc" id="L2196">                case 2: editingMovies();</span>
+<span class="nc" id="L2197">                        break;</span>
+<span class="nc" id="L2198">                case 3: addNewShows();</span>
+<span class="nc" id="L2199">                        break;</span>
+<span class="nc" id="L2200">                case 4: giftCardManage(userInput);</span>
+<span class="nc" id="L2201">                        break;</span>
+<span class="nc" id="L2202">                case 5: staffManage(2);</span>
+<span class="nc" id="L2203">                        break;</span>
+<span class="nc" id="L2204">                case 6: transactionManagement(userInput);</span>
+<span class="nc" id="L2205">                        break;</span>
+<span class="fc" id="L2206">                case 7: this.loggedIn = false;</span>
+<span class="fc" id="L2207">                        System.out.println(&quot;You have logged out&quot;);</span>
+<span class="fc" id="L2208">                        break;</span>
+
+<span class="fc" id="L2210">                default: System.out.println(&quot;Error: Not a valid option.&quot;);</span>
+<span class="fc" id="L2211">                    userInput.nextLine();</span>
+            }
+
+<span class="fc" id="L2214">        }</span>
+//        input.close();
+<span class="fc" id="L2216">    }</span>
+
+    public void transactionManagement(Scanner userInput) throws FileNotFoundException{
+<span class="fc" id="L2219">        userInput.nextLine();</span>
+//        Scanner userInput = new Scanner(System.in);
+
+        while(true){
+<span class="fc" id="L2223">            System.out.println(&quot;Select the report option you would like\n&quot; +</span>
+                    &quot;  1. Bookings Summary\n&quot; +
+                    &quot;  2. Cancelled Bookings Summary\n&quot; +
+                    &quot;  3. Return to menu&quot;);
+
+
+<span class="fc" id="L2229">            int entered = 0;</span>
+<span class="pc bpc" id="L2230" title="1 of 2 branches missed.">            if (userInput.hasNextInt()) {</span>
+<span class="fc" id="L2231">                entered = userInput.nextInt();</span>
+            } else {
+<span class="nc" id="L2233">                System.out.println(&quot;Error: Not a valid option.\n&quot;);</span>
+<span class="nc" id="L2234">                userInput.nextLine();</span>
+<span class="nc" id="L2235">                continue;</span>
+            }
+
+<span class="pc bpc" id="L2238" title="2 of 4 branches missed.">            if (entered &gt; 0 &amp;&amp; entered &lt;= 4) {</span>
+<span class="pc bpc" id="L2239" title="1 of 2 branches missed.">                if (entered == 1){</span>
+<span class="fc" id="L2240">                    bookingSummaries();</span>
+<span class="fc" id="L2241">                    System.out.println(&quot;\nThe summary of today's bookings can be found in src/main/resources/bookings.txt&quot;);</span>
+<span class="fc" id="L2242">                    break;</span>
+                }
+<span class="nc bnc" id="L2244" title="All 2 branches missed.">                else if (entered == 2){</span>
+<span class="nc" id="L2245">                    cancelledBookingSummary();</span>
+<span class="nc" id="L2246">                    break;</span>
+                }
+<span class="nc bnc" id="L2248" title="All 2 branches missed.">                else if (entered == 3){</span>
+<span class="nc" id="L2249">                    return;</span>
+                }
+            }
+<span class="nc" id="L2252">        }</span>
+<span class="fc" id="L2253">    }</span>
+
+    public List&lt;Transaction&gt; getTransactions() {
+<span class="fc" id="L2256">        return transactions;</span>
+    }
+
+
+
+    // MAIN LOOP WILL BE HERE RATHER THAN IN MAIN.
+    // DATABASE FILES WILL BE LOCATED IN 'src/main/resources'.
+    // movies.csv IS SEMICOLON DELIMITED.
+    public void run() throws FileNotFoundException {
+<span class="fc" id="L2265">        boolean running = true;</span>
+<span class="fc" id="L2266">        getMovies();</span>
+<span class="fc" id="L2267">        createAccounts();</span>
+<span class="fc" id="L2268">        createGiftCards();</span>
+
+<span class="fc" id="L2270">        Scanner userInput = new Scanner(System.in);</span>
+<span class="fc bfc" id="L2271" title="All 2 branches covered.">        while (running) {</span>
+
+            //this is to test the view movie functionality
+<span class="fc" id="L2274">            System.out.println(&quot;Select the page you would like to visit:\n&quot; +</span>
+                    &quot;  1. All movies\n&quot; +
+                    &quot;  2. Filter movies\n&quot; +
+                    &quot;  3. Register as Fancy Cinemas Customer\n&quot; +
+                    &quot;  4. Login\n&quot; +
+                    &quot;  5. Exit&quot;);
+<span class="fc" id="L2280">            int entered = 0;</span>
+<span class="fc bfc" id="L2281" title="All 2 branches covered.">            if (userInput.hasNextInt()) {</span>
+<span class="fc" id="L2282">                entered = userInput.nextInt();</span>
+            } else {
+<span class="fc" id="L2284">                System.out.println(&quot;Error: Not a valid option.\n&quot;);</span>
+<span class="fc" id="L2285">                userInput.nextLine();</span>
+<span class="fc" id="L2286">                continue;</span>
+            }
+
+<span class="fc bfc" id="L2289" title="All 2 branches covered.">            if (entered == 1){</span>
+<span class="fc" id="L2290">                displayMovies();</span>
+            }
+<span class="fc bfc" id="L2292" title="All 2 branches covered.">            else if (entered == 2) {</span>
+<span class="fc" id="L2293">                filterMovies(userInput);</span>
+            }
+<span class="pc bpc" id="L2295" title="1 of 2 branches missed.">            else if (entered == 3) {</span>
+<span class="nc" id="L2296">                registerCustomer(userInput, true);</span>
+            }
+<span class="pc bpc" id="L2298" title="1 of 2 branches missed.">            else if (entered == 4) {</span>
+<span class="nc" id="L2299">                loginUser();</span>
+            }
+<span class="fc bfc" id="L2301" title="All 2 branches covered.">            else if (entered == 5) { // CHANGE THE NUMBER OF THIS WHEN MORE OPTIONS ARE ADDED</span>
+<span class="fc" id="L2302">                running = false;</span>
+            }
+            else {
+<span class="fc" id="L2305">                System.out.println(&quot;Error: Not a valid option.\n&quot;);</span>
+<span class="fc" id="L2306">                continue;</span>
+            }
+
+            //logged in customer screen
+<span class="pc bpc" id="L2310" title="1 of 2 branches missed.">            if (this.loggedIn) {</span>
+<span class="nc bnc" id="L2311" title="All 2 branches missed.">                if(currAcc.getPerm() == 0){</span>
+<span class="nc" id="L2312">                    customerLoginLogic(userInput);</span>
+
+                }
+
+<span class="nc bnc" id="L2316" title="All 2 branches missed.">                else if(currAcc.getPerm() == 1){</span>
+<span class="nc" id="L2317">                    staffLoginLogic(userInput);</span>
+                }
+
+<span class="nc bnc" id="L2320" title="All 2 branches missed.">                else if(currAcc.getPerm() == 2){</span>
+<span class="nc" id="L2321">                    managerLoginLogic();</span>
+                }
+
+
+
+            }
+<span class="fc" id="L2327">        }</span>
+
+<span class="fc" id="L2329">        userInput.close();</span>
+<span class="fc" id="L2330">    }</span>
+
+
+
+
+
+    public static void main(String[] args) throws FileNotFoundException {
+<span class="fc" id="L2337">        Cinema cinema = new Cinema();</span>
+<span class="fc" id="L2338">        cinema.run();</span>
+<span class="fc" id="L2339">    }</span>
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span></div></body></html>

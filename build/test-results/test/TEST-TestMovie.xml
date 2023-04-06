@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="TestMovie" tests="10" skipped="0" failures="0" errors="0" timestamp="2021-11-11T05:05:24" hostname="DESKTOP-CBH797C" time="0.013">
+  <properties/>
+  <testcase name="testSynopsis()" classname="TestMovie" time="0.001"/>
+  <testcase name="testSetReleaseDate()" classname="TestMovie" time="0.001"/>
+  <testcase name="testGetCinemaRooms()" classname="TestMovie" time="0.001"/>
+  <testcase name="testSetClassification()" classname="TestMovie" time="0.001"/>
+  <testcase name="testGetScreenSize()" classname="TestMovie" time="0.001"/>
+  <testcase name="testSetSeats_Invalid()" classname="TestMovie" time="0.001"/>
+  <testcase name="testSetDirector()" classname="TestMovie" time="0.0"/>
+  <testcase name="testSetCast()" classname="TestMovie" time="0.0"/>
+  <testcase name="testSetName()" classname="TestMovie" time="0.0"/>
+  <testcase name="testSetScreenSize()" classname="TestMovie" time="0.0"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="TestCinema" tests="57" skipped="0" failures="0" errors="0" timestamp="2021-11-11T05:05:24" hostname="DESKTOP-CBH797C" time="0.547">
+  <properties/>
+  <testcase name="testCustomerRegister_UsernameSpace()" classname="TestCinema" time="0.026"/>
+  <testcase name="TestPickBookingSeat_InvalidPositiveNumber()" classname="TestCinema" time="0.026"/>
+  <testcase name="TestCustomerLoginLogic_CancelBookingValid()" classname="TestCinema" time="0.023"/>
+  <testcase name="testCreateAccounts_Valid()" classname="TestCinema" time="0.005"/>
+  <testcase name="TestPickBookingTime_invalidNegativeNumber()" classname="TestCinema" time="0.02"/>
+  <testcase name="testCatchNumberFormatExceptionFilterMovies()" classname="TestCinema" time="0.01"/>
+  <testcase name="TestCreateTransaction()" classname="TestCinema" time="0.014"/>
+  <testcase name="testNumberInvalidOptionFilterMovies()" classname="TestCinema" time="0.007"/>
+  <testcase name="testRun_DisplayMovies()" classname="TestCinema" time="0.019"/>
+  <testcase name="badLogicInputString()" classname="TestCinema" time="0.006"/>
+  <testcase name="TestPickBookingTime_invalidPositiveNumber()" classname="TestCinema" time="0.011"/>
+  <testcase name="test_viewStaff()" classname="TestCinema" time="0.007"/>
+  <testcase name="TestCustomerLoginLogic_FilterMovies()" classname="TestCinema" time="0.029"/>
+  <testcase name="testCustomerRegister_DifferentConfirmPassword()" classname="TestCinema" time="0.01"/>
+  <testcase name="TestBookingNumOfSeats_NotEnoughValues()" classname="TestCinema" time="0.006"/>
+  <testcase name="TestBookingNumOfSeats_invalidNegativeNumber()" classname="TestCinema" time="0.009"/>
+  <testcase name="TestBookMovie_invalidNegativeNumber()" classname="TestCinema" time="0.008"/>
+  <testcase name="test_validGiftCard()" classname="TestCinema" time="0.006"/>
+  <testcase name="testCreateAccounts_ThrowFileNotFound()" classname="TestCinema" time="0.004"/>
+  <testcase name="TestCustomerLoginLogic_AllMovies()" classname="TestCinema" time="0.01"/>
+  <testcase name="TestPickBookingTime_invalidDataType()" classname="TestCinema" time="0.005"/>
+  <testcase name="testCustomerRegister_EmptyPassword()" classname="TestCinema" time="0.007"/>
+  <testcase name="testManagerLoginLogic()" classname="TestCinema" time="0.004"/>
+  <testcase name="TestBookMovie_invalidPositiveNumber()" classname="TestCinema" time="0.006"/>
+  <testcase name="TestCustomerLoginLogic_BookMovieValid()" classname="TestCinema" time="0.035"/>
+  <testcase name="testRun_NumberNotAnOption()" classname="TestCinema" time="0.012"/>
+  <testcase name="TestGiftCardDelete()" classname="TestCinema" time="0.006"/>
+  <testcase name="test_viewGiftCard()" classname="TestCinema" time="0.005"/>
+  <testcase name="TestBookingNumOfSeats_invalidString()" classname="TestCinema" time="0.004"/>
+  <testcase name="testValidMultipleOptionsFilterMovies()" classname="TestCinema" time="0.007"/>
+  <testcase name="TestPickBookingSeat_InvalidDataType()" classname="TestCinema" time="0.006"/>
+  <testcase name="test_fireStaff()" classname="TestCinema" time="0.005"/>
+  <testcase name="TestPickBookingSeat_FrontNotEnoughSeats()" classname="TestCinema" time="0.005"/>
+  <testcase name="testDisplayMovies()" classname="TestCinema" time="0.005"/>
+  <testcase name="testRun_WrongDataType()" classname="TestCinema" time="0.012"/>
+  <testcase name="testBookingSummariesFalseFileNotFound()" classname="TestCinema" time="0.003"/>
+  <testcase name="testMain_Exit()" classname="TestCinema" time="0.013"/>
+  <testcase name="test_hireStaff()" classname="TestCinema" time="0.005"/>
+  <testcase name="testManagerBookingSummariesCorrectOutput()" classname="TestCinema" time="0.004"/>
+  <testcase name="TestCancelBooking_InvalidInput()" classname="TestCinema" time="0.006"/>
+  <testcase name="TestBookMovie_invalidDataType()" classname="TestCinema" time="0.007"/>
+  <testcase name="testStaffBookingSummariesCorrectOutput()" classname="TestCinema" time="0.003"/>
+  <testcase name="testEmptyFilterMovies()" classname="TestCinema" time="0.002"/>
+  <testcase name="TestUserTimeout()" classname="TestCinema" time="0.004"/>
+  <testcase name="test_giftCardCreate()" classname="TestCinema" time="0.009"/>
+  <testcase name="testCustomerRegister_PasswordSpace()" classname="TestCinema" time="0.004"/>
+  <testcase name="testRun_FilterMovies()" classname="TestCinema" time="0.006"/>
+  <testcase name="testValidFilterMovies()" classname="TestCinema" time="0.005"/>
+  <testcase name="testCustomerRegister_valid()" classname="TestCinema" time="0.004"/>
+  <testcase name="testRun_Exit()" classname="TestCinema" time="0.011"/>
+  <testcase name="badLogicInput()" classname="TestCinema" time="0.003"/>
+  <testcase name="TestBookingNumOfSeats_NoSeats()" classname="TestCinema" time="0.005"/>
+  <testcase name="testCustomerLoginLogic()" classname="TestCinema" time="0.003"/>
+  <testcase name="TestPickBookingSeat_InvalidNegativeNumber()" classname="TestCinema" time="0.004"/>
+  <testcase name="testCustomerRegister_EmptyUsername()" classname="TestCinema" time="0.005"/>
+  <testcase name="testStaffLoginLogic()" classname="TestCinema" time="0.003"/>
+  <testcase name="testCustomerRegister_TakenUsername()" classname="TestCinema" time="0.005"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

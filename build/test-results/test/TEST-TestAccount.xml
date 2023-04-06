@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="TestAccount" tests="1" skipped="0" failures="0" errors="0" timestamp="2021-11-11T05:05:24" hostname="DESKTOP-CBH797C" time="0.058">
+  <properties/>
+  <testcase name="testAccountConstruct()" classname="TestAccount" time="0.058"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

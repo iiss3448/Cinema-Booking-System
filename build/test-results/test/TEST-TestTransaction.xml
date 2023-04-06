@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="TestTransaction" tests="9" skipped="0" failures="0" errors="0" timestamp="2021-11-11T05:05:24" hostname="DESKTOP-CBH797C" time="0.014">
+  <properties/>
+  <testcase name="testGetMovieTime()" classname="TestTransaction" time="0.001"/>
+  <testcase name="testGetMovie()" classname="TestTransaction" time="0.001"/>
+  <testcase name="testGetID()" classname="TestTransaction" time="0.001"/>
+  <testcase name="testGetSeat()" classname="TestTransaction" time="0.001"/>
+  <testcase name="testGetCancelReason()" classname="TestTransaction" time="0.001"/>
+  <testcase name="testGetTransactionInformation()" classname="TestTransaction" time="0.001"/>
+  <testcase name="testSetCancelDate()" classname="TestTransaction" time="0.001"/>
+  <testcase name="testSetCancelReason()" classname="TestTransaction" time="0.0"/>
+  <testcase name="testGetNumOfSeat()" classname="TestTransaction" time="0.001"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>
